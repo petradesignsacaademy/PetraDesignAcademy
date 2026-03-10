@@ -19,15 +19,18 @@ function LoadingScreen() {
   )
 }
 
-// Any logged-in, approved student
+// Any logged-in, approved student (admins always pass through too)
 export function ProtectedRoute({ children }) {
-  const { user, isApproved, isPending, loading } = useAuth()
+  const { user, isAdmin, isApproved, isPending, loading } = useAuth()
   const location = useLocation()
 
   if (loading) return <LoadingScreen />
   if (!user)   return <Navigate to="/login" state={{ from: location }} replace />
 
-  // Approved — let them through
+  // Admins can access everything
+  if (isAdmin) return children
+
+  // Approved students — let them through
   if (isApproved) return children
 
   // Pending approval — show a holding page
