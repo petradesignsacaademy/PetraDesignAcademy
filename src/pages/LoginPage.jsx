@@ -65,11 +65,8 @@ export default function LoginPage() {
         <div style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'rgba(153,86,159,0.15)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -60, width: 300, height: 300, borderRadius: '50%', background: 'rgba(71,198,235,0.08)', pointerEvents: 'none' }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #99569F, #ED518E)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: 20, fontFamily: 'Cormorant Upright, serif' }}>P</span>
-          </div>
-          <span style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 22, fontWeight: 600, color: '#fff' }}>Petra Designs</span>
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <img src="/logo.png" alt="Petra Designs" style={{ height: 38, width: 'auto', filter: 'brightness(1)' }} />
         </div>
 
         <div style={{ position: 'relative' }}>
@@ -102,11 +99,8 @@ export default function LoginPage() {
         </button>
 
         {/* Mobile logo — only visible on small screens */}
-        <div className="mobile-logo" style={{ display: 'none', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #99569F, #ED518E)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: 18, fontFamily: 'Cormorant Upright, serif' }}>P</span>
-          </div>
-          <span style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 20, fontWeight: 600, color: 'var(--text)' }}>Petra Designs</span>
+        <div className="mobile-logo" style={{ display: 'none', alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>
+          <img src="/logo.png" alt="Petra Designs" style={{ height: 40, width: 'auto', filter: theme === 'dark' ? 'brightness(1)' : 'brightness(0) saturate(100%) invert(11%) sepia(45%) saturate(900%) hue-rotate(210deg) brightness(95%)' }} />
         </div>
 
         <div style={{ width: '100%', maxWidth: 400 }}>

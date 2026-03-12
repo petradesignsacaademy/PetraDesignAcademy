@@ -240,8 +240,74 @@ export default function LessonPage() {
     )
   }
 
+  function renderSidebar() {
+    return (
+      <div style={{ background: 'var(--bg2)', overflowY: 'auto', height: '100%' }}>
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
+          <Link to="/courses" style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', textDecoration: 'none', marginBottom: 10, fontWeight: 600 }}>
+            ← All modules
+          </Link>
+          <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 4 }}>MODULE</div>
+          <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{module?.title}</div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ height: 4, background: 'var(--bg3)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${allLessons.length > 0 ? Math.round((allLessons.filter(l => progress[l.id]).length / allLessons.length) * 100) : 0}%`, background: 'var(--purple)', borderRadius: 999, transition: 'width 0.5s' }} />
+            </div>
+            <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
+              {allLessons.filter(l => progress[l.id]).length}/{allLessons.length} complete
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: '8px 8px' }}>
+          {allLessons.map((l, i) => {
+            const isCurrent = l.id === lessonId
+            const isDone    = progress[l.id]
+            return (
+              <div key={l.id}
+                onClick={() => { navigate(`/courses/${courseId}/modules/${moduleId}/lessons/${l.id}`); setSidebarOpen(false) }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 10px', borderRadius: 12, marginBottom: 2, cursor: 'pointer', background: isCurrent ? 'rgba(153,86,159,0.1)' : 'transparent', border: isCurrent ? '1px solid rgba(153,86,159,0.2)' : '1px solid transparent', transition: 'all 0.15s' }}
+                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg3)' }}
+                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
+              >
+                <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, marginTop: 1, background: isDone ? 'rgba(34,197,94,0.12)' : isCurrent ? 'rgba(153,86,159,0.12)' : 'var(--bg3)', border: `1.5px solid ${isDone ? '#22C55E' : isCurrent ? 'var(--purple)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isDone ? <span style={{ fontSize: 10, color: '#22C55E', fontWeight: 700 }}>✓</span> : <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, color: isCurrent ? 'var(--purple)' : 'var(--text3)' }}>{i + 1}</span>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? 'var(--purple)' : isDone ? 'var(--text2)' : 'var(--text)', lineHeight: 1.3, marginBottom: 3 }}>{l.title}</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {l.duration_mins && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>{formatDuration(l.duration_mins)}</span>}
+                    {l.has_assignment && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>· ✏️</span>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <StudentLayout>
+      {/* Mobile sidebar toggle bar */}
+      <div className="lesson-mob-btn" style={{ display: 'none', padding: '10px 16px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)', alignItems: 'center', gap: 10 }}>
+        <button onClick={() => setSidebarOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'var(--font-body)' }}>
+          <span>📋</span> {sidebarOpen ? 'Hide lesson list' : 'Lesson list'}
+        </button>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div style={{ position: 'fixed', inset: 0, top: 64, zIndex: 150 }}>
+          <div onClick={() => setSidebarOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'absolute', top: 0, right: 0, width: 300, bottom: 0, borderLeft: '1px solid var(--border)', overflowY: 'auto', animation: 'slideInRight 0.2s ease' }}>
+            {renderSidebar()}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', minHeight: 'calc(100vh - 64px)' }}>
 
         {/* ── Main content ──────────────────────────────────────────────────── */}
@@ -462,71 +528,20 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* ── Sidebar — lesson list ──────────────────────────────────────────── */}
-        <div style={{ background: 'var(--bg2)', overflowY: 'auto', position: 'sticky', top: 64, height: 'calc(100vh - 64px)' }}>
-
-          {/* Module title */}
-          <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
-            <Link to="/courses" style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', textDecoration: 'none', marginBottom: 10, fontWeight: 600 }}>
-              ← All modules
-            </Link>
-            <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 4 }}>MODULE</div>
-            <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{module?.title}</div>
-            {/* Module progress */}
-            <div style={{ marginTop: 12 }}>
-              <div style={{ height: 4, background: 'var(--bg3)', borderRadius: 999, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${allLessons.length > 0 ? Math.round((allLessons.filter(l => progress[l.id]).length / allLessons.length) * 100) : 0}%`, background: 'var(--purple)', borderRadius: 999, transition: 'width 0.5s' }} />
-              </div>
-              <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
-                {allLessons.filter(l => progress[l.id]).length}/{allLessons.length} complete
-              </div>
-            </div>
-          </div>
-
-          {/* Lesson list */}
-          <div style={{ padding: '8px 8px' }}>
-            {allLessons.map((l, i) => {
-              const isCurrent = l.id === lessonId
-              const isDone    = progress[l.id]
-              return (
-                <div
-                  key={l.id}
-                  onClick={() => navigate(`/courses/${courseId}/modules/${moduleId}/lessons/${l.id}`)}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    padding: '11px 10px', borderRadius: 12, marginBottom: 2,
-                    cursor: 'pointer',
-                    background: isCurrent ? 'rgba(153,86,159,0.1)' : 'transparent',
-                    border: isCurrent ? '1px solid rgba(153,86,159,0.2)' : '1px solid transparent',
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg3)' }}
-                  onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
-                >
-                  {/* Status dot */}
-                  <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, marginTop: 1, background: isDone ? 'rgba(34,197,94,0.12)' : isCurrent ? 'rgba(153,86,159,0.12)' : 'var(--bg3)', border: `1.5px solid ${isDone ? '#22C55E' : isCurrent ? 'var(--purple)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {isDone
-                      ? <span style={{ fontSize: 10, color: '#22C55E', fontWeight: 700 }}>✓</span>
-                      : <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, color: isCurrent ? 'var(--purple)' : 'var(--text3)' }}>{i + 1}</span>
-                    }
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? 'var(--purple)' : isDone ? 'var(--text2)' : 'var(--text)', lineHeight: 1.3, marginBottom: 3 }}>{l.title}</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {l.duration_mins && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>{formatDuration(l.duration_mins)}</span>}
-                      {l.has_assignment && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>· ✏️</span>}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+        {/* ── Sidebar — desktop only ── */}
+        <div className="lesson-sidebar" style={{ background: 'var(--bg2)', overflowY: 'auto', position: 'sticky', top: 64, height: 'calc(100vh - 64px)' }}>
+          {renderSidebar()}
         </div>
       </div>
 
       <style>{`
-        @keyframes spin    { to { transform: rotate(360deg); } }
-        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin      { to { transform: rotate(360deg); } }
+        @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+        @media (max-width: 768px) {
+          .lesson-sidebar { display: none !important; }
+          .lesson-mob-btn { display: flex !important; }
+        }
       `}</style>
     </StudentLayout>
   )
