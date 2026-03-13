@@ -57,6 +57,13 @@ export default function AdminOverview() {
       body: 'Welcome to Petra Designs. You can now access the full course.',
       link: '/courses',
     })
+    // Enroll in all published courses
+    const { data: courses } = await supabase
+      .from('courses').select('id').eq('is_published', true)
+    if (courses?.length) {
+      const enrollments = courses.map(c => ({ student_id: id, course_id: c.id }))
+      await supabase.from('enrollments').upsert(enrollments, { onConflict: 'student_id,course_id', ignoreDuplicates: true })
+    }
     loadData()
   }
 

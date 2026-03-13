@@ -18,7 +18,6 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-// Extract YouTube video ID from various URL formats
 function getYouTubeId(url) {
   if (!url) return null
   const patterns = [
@@ -41,15 +40,14 @@ export default function LessonPage() {
   const [lesson, setLesson]         = useState(null)
   const [module, setModule]         = useState(null)
   const [resources, setResources]   = useState([])
-  const [allLessons, setAllLessons] = useState([])   // for sidebar
-  const [progress, setProgress]     = useState({})   // lessonId → is_completed
+  const [allLessons, setAllLessons] = useState([])
+  const [progress, setProgress]     = useState({})
   const [isCompleted, setIsCompleted] = useState(false)
   const [tab, setTab]               = useState('overview')
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [error, setError]           = useState('')
 
-  // Assignment state
   const [answerText, setAnswerText] = useState('')
   const [file, setFile]             = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -65,30 +63,27 @@ export default function LessonPage() {
     setLoading(true)
     setTab('overview')
     try {
-      // Load lesson
       const { data: lessonData, error: lessonErr } = await supabase
         .from('lessons')
         .select('*')
         .eq('id', lessonId)
-        .single()
+        .maybeSingle()
       if (lessonErr) throw lessonErr
+      if (!lessonData) throw new Error('Lesson not found')
       setLesson(lessonData)
 
-      // Load module
       const { data: moduleData } = await supabase
         .from('modules')
         .select('*, lessons(id, title, sort_order, is_published, duration_mins, has_assignment)')
         .eq('id', moduleId)
-        .single()
+        .maybeSingle()
       setModule(moduleData)
 
-      // Sorted published lessons for sidebar
       const sorted = (moduleData?.lessons || [])
         .filter(l => l.is_published)
         .sort((a, b) => a.sort_order - b.sort_order)
       setAllLessons(sorted)
 
-      // Load resources for this lesson
       const { data: resData } = await supabase
         .from('lesson_resources')
         .select('*')
@@ -96,7 +91,6 @@ export default function LessonPage() {
         .order('sort_order')
       setResources(resData || [])
 
-      // Load this student's progress for all lessons in module
       const lessonIds = sorted.map(l => l.id)
       if (lessonIds.length > 0) {
         const { data: progData } = await supabase
@@ -110,7 +104,6 @@ export default function LessonPage() {
         setIsCompleted(map[lessonId] || false)
       }
 
-      // Check for existing submission
       if (lessonData.has_assignment) {
         const { data: subData } = await supabase
           .from('submissions')
@@ -132,7 +125,6 @@ export default function LessonPage() {
     }
   }
 
-  // Mark complete / incomplete toggle
   async function toggleComplete() {
     setSaving(true)
     const newVal = !isCompleted
@@ -151,8 +143,6 @@ export default function LessonPage() {
     if (!upsertErr) {
       setIsCompleted(newVal)
       setProgress(p => ({ ...p, [lessonId]: newVal }))
-
-      // Auto-advance to next lesson when marking complete
       if (newVal) {
         const currentIndex = allLessons.findIndex(l => l.id === lessonId)
         const next = allLessons[currentIndex + 1]
@@ -164,7 +154,6 @@ export default function LessonPage() {
     setSaving(false)
   }
 
-  // Submit assignment
   async function handleSubmit(e) {
     e.preventDefault()
     if (!answerText && !file) return
@@ -173,7 +162,6 @@ export default function LessonPage() {
     let fileUrl = existingSubmission?.file_url || null
     let fileName = existingSubmission?.file_name || null
 
-    // Upload file to Supabase Storage if provided
     if (file) {
       const ext = file.name.split('.').pop()
       const path = `submissions/${user.id}/${lessonId}.${ext}`
@@ -206,14 +194,11 @@ export default function LessonPage() {
     setSubmitting(false)
   }
 
-  // Navigate between lessons
   const currentIndex = allLessons.findIndex(l => l.id === lessonId)
   const prevLesson   = allLessons[currentIndex - 1]
   const nextLesson   = allLessons[currentIndex + 1]
+  const videoId      = getYouTubeId(lesson?.video_url)
 
-  const videoId = getYouTubeId(lesson?.video_url)
-
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <StudentLayout>
@@ -240,80 +225,14 @@ export default function LessonPage() {
     )
   }
 
-  function renderSidebar() {
-    return (
-      <div style={{ background: 'var(--bg2)', overflowY: 'auto', height: '100%' }}>
-        <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
-          <Link to="/courses" style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', textDecoration: 'none', marginBottom: 10, fontWeight: 600 }}>
-            ← All modules
-          </Link>
-          <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 4 }}>MODULE</div>
-          <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{module?.title}</div>
-          <div style={{ marginTop: 12 }}>
-            <div style={{ height: 4, background: 'var(--bg3)', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${allLessons.length > 0 ? Math.round((allLessons.filter(l => progress[l.id]).length / allLessons.length) * 100) : 0}%`, background: 'var(--purple)', borderRadius: 999, transition: 'width 0.5s' }} />
-            </div>
-            <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
-              {allLessons.filter(l => progress[l.id]).length}/{allLessons.length} complete
-            </div>
-          </div>
-        </div>
-        <div style={{ padding: '8px 8px' }}>
-          {allLessons.map((l, i) => {
-            const isCurrent = l.id === lessonId
-            const isDone    = progress[l.id]
-            return (
-              <div key={l.id}
-                onClick={() => { navigate(`/courses/${courseId}/modules/${moduleId}/lessons/${l.id}`); setSidebarOpen(false) }}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 10px', borderRadius: 12, marginBottom: 2, cursor: 'pointer', background: isCurrent ? 'rgba(153,86,159,0.1)' : 'transparent', border: isCurrent ? '1px solid rgba(153,86,159,0.2)' : '1px solid transparent', transition: 'all 0.15s' }}
-                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg3)' }}
-                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
-              >
-                <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, marginTop: 1, background: isDone ? 'rgba(34,197,94,0.12)' : isCurrent ? 'rgba(153,86,159,0.12)' : 'var(--bg3)', border: `1.5px solid ${isDone ? '#22C55E' : isCurrent ? 'var(--purple)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {isDone ? <span style={{ fontSize: 10, color: '#22C55E', fontWeight: 700 }}>✓</span> : <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, color: isCurrent ? 'var(--purple)' : 'var(--text3)' }}>{i + 1}</span>}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? 'var(--purple)' : isDone ? 'var(--text2)' : 'var(--text)', lineHeight: 1.3, marginBottom: 3 }}>{l.title}</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {l.duration_mins && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>{formatDuration(l.duration_mins)}</span>}
-                    {l.has_assignment && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>· ✏️</span>}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
   return (
     <StudentLayout>
-      {/* Mobile sidebar toggle bar */}
-      <div className="lesson-mob-btn" style={{ display: 'none', padding: '10px 16px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)', alignItems: 'center', gap: 10 }}>
-        <button onClick={() => setSidebarOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'var(--font-body)' }}>
-          <span>📋</span> {sidebarOpen ? 'Hide lesson list' : 'Lesson list'}
-        </button>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div style={{ position: 'fixed', inset: 0, top: 64, zIndex: 150 }}>
-          <div onClick={() => setSidebarOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'absolute', top: 0, right: 0, width: 300, bottom: 0, borderLeft: '1px solid var(--border)', overflowY: 'auto', animation: 'slideInRight 0.2s ease' }}>
-            {renderSidebar()}
-          </div>
-        </div>
-      )}
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', minHeight: 'calc(100vh - 64px)' }}>
 
-        {/* ── Main content ──────────────────────────────────────────────────── */}
+        {/* ── Main content ── */}
         <div style={{ borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
 
-          {/* Video area */}
+          {/* Video */}
           <div style={{ background: '#000', position: 'relative', width: '100%' }}>
             {videoId ? (
               <div style={{ position: 'relative', paddingTop: '56.25%' }}>
@@ -326,7 +245,6 @@ export default function LessonPage() {
                 />
               </div>
             ) : (
-              // Placeholder when no video yet
               <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #12133C, #2D1060)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎬</div>
                 <p style={{ fontFamily: 'Poppins, sans-serif', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Video coming soon</p>
@@ -367,7 +285,7 @@ export default function LessonPage() {
               </button>
             </div>
 
-            {/* Duration + assignment badge */}
+            {/* Badges */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
               {lesson.duration_mins && (
                 <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', background: 'var(--bg2)', padding: '4px 12px', borderRadius: 999 }}>🎬 {formatDuration(lesson.duration_mins)}</span>
@@ -380,7 +298,7 @@ export default function LessonPage() {
             {/* Tabs */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 24, gap: 0 }}>
               {[
-                { key: 'overview', label: '📖 Overview' },
+                { key: 'overview',  label: '📖 Overview' },
                 { key: 'resources', label: `📄 Resources${resources.length > 0 ? ` (${resources.length})` : ''}` },
                 ...(lesson.has_assignment ? [{ key: 'assignment', label: '✏️ Assignment' }] : []),
               ].map(t => (
@@ -390,7 +308,7 @@ export default function LessonPage() {
               ))}
             </div>
 
-            {/* Tab content */}
+            {/* Tab: Overview */}
             {tab === 'overview' && (
               <div style={{ animation: 'fadeIn 0.3s ease' }}>
                 {lesson.description
@@ -400,6 +318,7 @@ export default function LessonPage() {
               </div>
             )}
 
+            {/* Tab: Resources */}
             {tab === 'resources' && (
               <div style={{ animation: 'fadeIn 0.3s ease' }}>
                 {resources.length === 0 ? (
@@ -407,7 +326,8 @@ export default function LessonPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {resources.map(r => (
-                      <a key={r.id} href={r.file_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12, textDecoration: 'none', transition: 'border-color 0.2s' }}
+                      <a key={r.id} href={r.file_url} target="_blank" rel="noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12, textDecoration: 'none', transition: 'border-color 0.2s' }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--purple)'}
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                       >
@@ -432,10 +352,10 @@ export default function LessonPage() {
               </div>
             )}
 
+            {/* Tab: Assignment */}
             {tab === 'assignment' && lesson.has_assignment && (
               <div style={{ animation: 'fadeIn 0.3s ease' }}>
 
-                {/* Brief */}
                 {lesson.assignment_brief && (
                   <div style={{ background: 'rgba(237,81,142,0.06)', border: '1px solid rgba(237,81,142,0.15)', borderRadius: 14, padding: '18px 20px', marginBottom: 24 }}>
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 10 }}>✏️ Assignment Brief</div>
@@ -443,7 +363,6 @@ export default function LessonPage() {
                   </div>
                 )}
 
-                {/* Feedback from Petra — show if submission was reviewed */}
                 {existingSubmission?.status === 'reviewed' && (
                   <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '18px 20px', marginBottom: 24 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
@@ -460,7 +379,6 @@ export default function LessonPage() {
                   </div>
                 )}
 
-                {/* Submitted state */}
                 {submitted && existingSubmission?.status !== 'reviewed' ? (
                   <div style={{ background: 'rgba(153,86,159,0.06)', border: '1px solid rgba(153,86,159,0.2)', borderRadius: 14, padding: '24px', textAlign: 'center', marginBottom: 24 }}>
                     <div style={{ fontSize: 36, marginBottom: 12 }}>📬</div>
@@ -486,7 +404,9 @@ export default function LessonPage() {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Written notes / questions for Petra <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(optional)</span></label>
+                      <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>
+                        Written notes / questions for Petra <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(optional)</span>
+                      </label>
                       <textarea
                         value={answerText} onChange={e => setAnswerText(e.target.value)}
                         placeholder="Share your thought process, any questions, or notes about your submission..."
@@ -512,7 +432,7 @@ export default function LessonPage() {
               </div>
             )}
 
-            {/* Prev / Next navigation */}
+            {/* Prev / Next */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 40, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
               {prevLesson ? (
                 <button onClick={() => navigate(`/courses/${courseId}/modules/${moduleId}/lessons/${prevLesson.id}`)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text2)', padding: '10px 20px', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -528,19 +448,62 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* ── Sidebar — desktop only ── */}
+        {/* ── Sidebar — hidden on mobile via CSS class ── */}
         <div className="lesson-sidebar" style={{ background: 'var(--bg2)', overflowY: 'auto', position: 'sticky', top: 64, height: 'calc(100vh - 64px)' }}>
-          {renderSidebar()}
+
+          <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
+            <Link to="/courses" style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', textDecoration: 'none', marginBottom: 10, fontWeight: 600 }}>
+              ← All modules
+            </Link>
+            <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 4 }}>MODULE</div>
+            <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{module?.title}</div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ height: 4, background: 'var(--bg3)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${allLessons.length > 0 ? Math.round((allLessons.filter(l => progress[l.id]).length / allLessons.length) * 100) : 0}%`, background: 'var(--purple)', borderRadius: 999, transition: 'width 0.5s' }} />
+              </div>
+              <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
+                {allLessons.filter(l => progress[l.id]).length}/{allLessons.length} complete
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: '8px 8px' }}>
+            {allLessons.map((l, i) => {
+              const isCurrent = l.id === lessonId
+              const isDone    = progress[l.id]
+              return (
+                <div
+                  key={l.id}
+                  onClick={() => navigate(`/courses/${courseId}/modules/${moduleId}/lessons/${l.id}`)}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 10px', borderRadius: 12, marginBottom: 2, cursor: 'pointer', background: isCurrent ? 'rgba(153,86,159,0.1)' : 'transparent', border: isCurrent ? '1px solid rgba(153,86,159,0.2)' : '1px solid transparent', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg3)' }}
+                  onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, marginTop: 1, background: isDone ? 'rgba(34,197,94,0.12)' : isCurrent ? 'rgba(153,86,159,0.12)' : 'var(--bg3)', border: `1.5px solid ${isDone ? '#22C55E' : isCurrent ? 'var(--purple)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDone
+                      ? <span style={{ fontSize: 10, color: '#22C55E', fontWeight: 700 }}>✓</span>
+                      : <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, color: isCurrent ? 'var(--purple)' : 'var(--text3)' }}>{i + 1}</span>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? 'var(--purple)' : isDone ? 'var(--text2)' : 'var(--text)', lineHeight: 1.3, marginBottom: 3 }}>{l.title}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {l.duration_mins && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>{formatDuration(l.duration_mins)}</span>}
+                      {l.has_assignment && <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>· ✏️</span>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes spin      { to { transform: rotate(360deg); } }
-        @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInRight { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes spin   { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (max-width: 768px) {
           .lesson-sidebar { display: none !important; }
-          .lesson-mob-btn { display: flex !important; }
         }
       `}</style>
     </StudentLayout>

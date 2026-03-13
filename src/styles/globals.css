@@ -160,78 +160,49 @@ img { max-width: 100%; height: auto; display: block; }
 .divider { width: 100%; height: 1px; background: var(--border); margin: 24px 0; }
 
 /* ════════════════════════════════════════════════════════════════════════════════
-   COMPONENT CLASSES — used in JSX for responsive toggling
-   ════════════════════════════════════════════════════════════════════════════════ */
-
-/* Navbar */
-.nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; flex-direction: column; gap: 5px; align-items: center; justify-content: center; }
-
-/* Landing nav */
-.landing-nav-links     { display: flex; }
-.landing-nav-right     { display: flex; }
-.landing-nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; flex-direction: column; gap: 5px; align-items: center; justify-content: center; }
-
-/* Auth pages */
-.auth-grid        { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
-.auth-brand       { display: flex; }
-.auth-mobile-logo { display: none; }
-
-/* Admin layout */
-.admin-layout-grid { display: grid; grid-template-columns: 220px 1fr; flex: 1; min-height: calc(100vh - 64px); }
-.admin-sidebar     { }
-.admin-mobile-btn  { display: none; }
-
-/* Lesson layout */
-.lesson-layout  { display: grid; grid-template-columns: 1fr 300px; flex: 1; }
-.lesson-sidebar { }
-.lesson-mob-btn { display: none; }
-
-/* ════════════════════════════════════════════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════════════════════════════════════════════ */
 
-/* ── Tablet (≤ 1024px) ───────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .container { padding: 0 24px; }
-  .admin-layout-grid { grid-template-columns: 200px 1fr; }
 }
 
-/* ── Mobile (≤ 768px) ────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-
-  /* ── Global ── */
   .container { padding: 0 16px; }
 
-  /* ── Student/admin navbar ── */
+  /* Navbar */
   .nav-desktop-links { display: none !important; }
   .nav-desktop-right { display: none !important; }
   .nav-hamburger     { display: flex !important; }
 
-  /* ── Landing nav ── */
+  /* Landing nav */
   .landing-nav-links     { display: none !important; }
   .landing-nav-right     { display: none !important; }
   .landing-nav-hamburger { display: flex !important; }
 
-  /* ── Auth pages ── */
-  .auth-grid        { grid-template-columns: 1fr !important; }
-  .auth-brand       { display: none !important; }
-  .auth-mobile-logo { display: flex !important; }
+  /* Login / Register */
+  .login-grid  { grid-template-columns: 1fr !important; }
+  .login-brand { display: none !important; }
+  .login-form  { padding: 48px 24px !important; align-items: stretch !important; }
+  .mobile-logo { display: flex !important; }
 
-  /* ── Admin layout ── */
+  /* Admin layout */
   .admin-layout-grid { grid-template-columns: 1fr !important; }
   .admin-sidebar     { display: none !important; }
   .admin-mobile-btn  { display: flex !important; }
+  .admin-main        { padding: 20px 16px !important; }
 
-  /* ── Lesson sidebar ── */
-  .lesson-layout  { grid-template-columns: 1fr !important; }
+  /* Lesson sidebar */
   .lesson-sidebar { display: none !important; }
   .lesson-mob-btn { display: flex !important; }
 
-  /* ── General padding ── */
-  .admin-main { padding: 20px 16px !important; }
+  /* Dashboard grids */
+  .dashboard-wrap   { padding: 24px 16px !important; }
+  .dash-top-grid    { grid-template-columns: 1fr !important; }
+  .dash-bottom-grid { grid-template-columns: 1fr !important; }
+  .dash-quick-links { grid-template-columns: 1fr 1fr !important; }
 }
 
-/* ── Small mobile (≤ 480px) ──────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   h1 { font-size: clamp(34px, 10vw, 52px) !important; }
   h2 { font-size: clamp(26px, 8vw, 40px) !important; }

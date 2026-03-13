@@ -164,7 +164,7 @@ export default function LandingPage() {
 
         {/* Stats bar */}
         <div style={{ opacity: 0, animation: 'fadeUp 0.7s 0.55s ease forwards', borderTop: '1px solid var(--border)', paddingTop: 40, display: 'flex', flexWrap: 'wrap', gap: 0, justifyContent: 'center' }}>
-          {[['248+', 'Students enrolled'], ['4', 'Course modules'], ['26+', 'Video lessons'], ['100%', 'Personal feedback']].map(([val, label], i, arr) => (
+          {[['100+', 'Students enrolled'], ['4', 'Course modules'], ['26+', 'Video lessons'], ['100%', 'Personal feedback']].map(([val, label], i, arr) => (
             <div key={i} style={{ padding: 'clamp(0px, 1vw, 0px) clamp(20px, 4vw, 40px)', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none', textAlign: 'center', marginBottom: 8 }}>
               <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 700, color: 'var(--text)' }}>{val}</div>
               <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(10px, 1.5vw, 12px)', color: 'var(--text3)', fontWeight: 500, marginTop: 4 }}>{label}</div>

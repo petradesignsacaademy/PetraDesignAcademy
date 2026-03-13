@@ -18,25 +18,23 @@ export default function AdminLayout({ children }) {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Navbar variant="admin" />
 
-      {/* Mobile nav bar strip */}
+      {/* Mobile menu button — only visible on small screens */}
       <div className="admin-mobile-btn" style={{
         display: 'none',
         alignItems: 'center',
-        gap: 8,
         padding: '10px 16px',
         background: 'var(--bg2)',
         borderBottom: '1px solid var(--border)',
-        flexWrap: 'wrap',
       }}>
         <button
           onClick={() => setSidebarOpen(o => !o)}
           style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'var(--font-body)' }}
         >
-          <span>☰</span> Menu
+          <span>☰</span> {sidebarOpen ? 'Close menu' : 'Menu'}
         </button>
       </div>
 
-      {/* Mobile drawer overlay */}
+      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 150, top: 64 }}>
           <div onClick={() => setSidebarOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
@@ -53,7 +51,7 @@ export default function AdminLayout({ children }) {
                 style={({ isActive }) => ({
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '11px 14px', borderRadius: 12, marginBottom: 3,
-                  textDecoration: 'none', cursor: 'pointer',
+                  textDecoration: 'none',
                   background: isActive ? 'rgba(153,86,159,0.1)' : 'transparent',
                   border: isActive ? '1px solid rgba(153,86,159,0.2)' : '1px solid transparent',
                   color: isActive ? 'var(--purple)' : 'var(--text2)',
@@ -68,7 +66,9 @@ export default function AdminLayout({ children }) {
         </div>
       )}
 
-      <div className="admin-layout-grid">
+      {/* Main grid — sidebar + content */}
+      <div className="admin-layout-grid" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', flex: 1 }}>
+
         {/* Desktop sidebar */}
         <aside className="admin-sidebar" style={{
           background: 'var(--bg2)',
@@ -104,7 +104,7 @@ export default function AdminLayout({ children }) {
           ))}
         </aside>
 
-        {/* Main content */}
+        {/* Page content */}
         <main className="admin-main" style={{ padding: '36px 40px', overflowY: 'auto', minHeight: 'calc(100vh - 64px)' }}>
           {children}
         </main>
@@ -112,6 +112,12 @@ export default function AdminLayout({ children }) {
 
       <style>{`
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+        @media (max-width: 768px) {
+          .admin-layout-grid { grid-template-columns: 1fr !important; }
+          .admin-sidebar     { display: none !important; }
+          .admin-mobile-btn  { display: flex !important; }
+          .admin-main        { padding: 20px 16px !important; }
+        }
       `}</style>
     </div>
   )

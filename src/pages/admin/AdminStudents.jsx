@@ -31,12 +31,22 @@ export default function AdminStudents() {
   async function updateStatus(id, status) {
     await supabase.from('profiles').update({ status }).eq('id', id)
     if (status === 'approved') {
+      // Send approval notification
       await supabase.from('notifications').insert({
         user_id: id, type: 'approved',
         title: 'Your access has been approved!',
         body: 'Welcome to Petra Designs. You can now access the full course.',
         link: '/courses',
       })
+      // Enroll student in all published courses
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('is_published', true)
+      if (courses?.length) {
+        const enrollments = courses.map(c => ({ student_id: id, course_id: c.id }))
+        await supabase.from('enrollments').upsert(enrollments, { onConflict: 'student_id,course_id', ignoreDuplicates: true })
+      }
     }
     setStudents(prev => prev.map(s => s.id === id ? { ...s, status } : s))
     if (selected?.id === id) setSelected(prev => ({ ...prev, status }))

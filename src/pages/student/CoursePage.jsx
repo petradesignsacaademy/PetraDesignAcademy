@@ -58,7 +58,7 @@ export default function CoursePage() {
         .eq('is_published', true)
         .order('sort_order')
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (courseErr) throw courseErr
       setCourse(courseData)

@@ -33,7 +33,7 @@ export default function LoginPage() {
       .from('profiles')
       .select('role, status')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
 
     if (profile?.role === 'admin') {
       navigate('/admin', { replace: true })
@@ -130,7 +130,7 @@ export default function LoginPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'Poppins, sans-serif' }}>Password</label>
-                <button type="button" style={{ background: 'none', border: 'none', color: 'var(--purple)', fontSize: 12, fontFamily: 'Poppins, sans-serif', fontWeight: 600, cursor: 'pointer' }}>Forgot password?</button>
+                <Link to="/forgot-password" style={{ color: 'var(--purple)', fontSize: 12, fontFamily: 'Poppins, sans-serif', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</Link>
               </div>
               <div style={{ position: 'relative' }}>
                 <input type={showPass ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required

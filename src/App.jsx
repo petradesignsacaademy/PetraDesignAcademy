@@ -8,6 +8,8 @@ import LandingPage    from './pages/LandingPage'
 import LoginPage      from './pages/LoginPage'
 import RegisterPage   from './pages/RegisterPage'
 import PendingPage    from './pages/PendingPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage  from './pages/ResetPasswordPage'
 
 // ── Student pages ─────────────────────────────────────────────────────────────
 import DashboardPage  from './pages/student/DashboardPage'
@@ -37,6 +39,8 @@ export default function App() {
             <Route path="/"          element={<LandingPage />} />
             <Route path="/login"     element={<GuestRoute><LoginPage /></GuestRoute>} />
             <Route path="/register"  element={<GuestRoute><RegisterPage /></GuestRoute>} />
+            <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+            <Route path="/reset-password"  element={<ResetPasswordPage />} />
             <Route path="/pending"   element={<PendingPage />} />
 
             {/* ── Student (approved members only) ────────────────────────── */}
