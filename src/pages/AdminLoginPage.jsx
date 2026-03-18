@@ -18,29 +18,33 @@ export default function AdminLoginPage() {
     setError('')
     setLoading(true)
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (signInError) {
-      setError('Incorrect email or password.')
+      if (signInError) {
+        setError('Incorrect email or password.')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profile?.role !== 'admin') {
+        await supabase.auth.signOut()
+        setError('Access denied. This portal is for administrators only.')
+        return
+      }
+
+      navigate('/admin', { replace: true })
+    } catch (err) {
+      console.error('[AdminLogin] error:', err)
+      setError('Something went wrong. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .maybeSingle()
-
-    if (profile?.role !== 'admin') {
-      await supabase.auth.signOut()
-      setError('Access denied. This portal is for administrators only.')
-      setLoading(false)
-      return
-    }
-
-    setLoading(false)
-    navigate('/admin', { replace: true })
   }
 
   const inputStyle = {
