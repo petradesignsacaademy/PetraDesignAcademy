@@ -1,17 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 export default function AdminLoginPage() {
   const { theme, toggleTheme } = useTheme()
+  const { signIn, signOut, isAdmin, loading: authLoading, user, profile } = useAuth()
   const navigate = useNavigate()
 
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [showPass, setShowPass] = useState(false)
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [error, setError]           = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [showPass, setShowPass]     = useState(false)
+  const [checkingRole, setCheckingRole] = useState(false)
+
+  // If already logged in as admin, go straight to /admin
+  useEffect(() => {
+    if (!authLoading && user && profile && isAdmin) {
+      navigate('/admin', { replace: true })
+    }
+  }, [authLoading, user, profile, isAdmin, navigate])
+
+  // After sign-in, wait for AuthContext to finish loading the profile, then check role
+  useEffect(() => {
+    if (!checkingRole) return
+    if (authLoading) return   // still fetching profile — wait
+
+    // AuthContext has settled
+    setCheckingRole(false)
+    setLoading(false)
+
+    if (isAdmin) {
+      navigate('/admin', { replace: true })
+    } else {
+      signOut()
+      setError('Access denied. This portal is for administrators only.')
+    }
+  }, [checkingRole, authLoading, isAdmin, navigate, signOut])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -19,30 +45,18 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
+      const { error: signInError } = await signIn(email, password)
       if (signInError) {
         setError('Incorrect email or password.')
+        setLoading(false)
         return
       }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle()
-
-      if (profile?.role !== 'admin') {
-        await supabase.auth.signOut()
-        setError('Access denied. This portal is for administrators only.')
-        return
-      }
-
-      navigate('/admin', { replace: true })
+      // Sign-in succeeded — AuthContext will now fetch the profile.
+      // Keep spinner running and wait for authLoading to settle (useEffect above).
+      setCheckingRole(true)
     } catch (err) {
       console.error('[AdminLogin] error:', err)
       setError('Something went wrong. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
