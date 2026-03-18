@@ -82,7 +82,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ display: 'flex', gap: 32, position: 'relative' }}>
-          {[['248+', 'Students'], ['4', 'Modules'], ['26', 'Lessons']].map(([val, label]) => (
+          {[['100+', 'Students'], ['6', 'Modules'], ['30+', 'Lessons']].map(([val, label]) => (
             <div key={label}>
               <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 28, fontWeight: 700, color: '#fff' }}>{val}</div>
               <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>{label}</div>
