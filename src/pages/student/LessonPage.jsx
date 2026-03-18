@@ -56,8 +56,8 @@ export default function LessonPage() {
   const fileRef = useRef(null)
 
   useEffect(() => {
-    loadLesson()
-  }, [lessonId])
+    if (user) loadLesson()
+  }, [lessonId, user])
 
   async function loadLesson() {
     setLoading(true)

@@ -28,13 +28,18 @@ export default function CommunityPage() {
 
   async function loadPosts() {
     setLoading(true)
-    const { data } = await supabase
-      .from('community_posts')
-      .select(`*, profiles(full_name), community_replies(id, content, created_at, profiles(full_name))`)
-      .eq('is_removed', false)
-      .order('created_at', { ascending: false })
-    setPosts(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('community_posts')
+        .select(`*, profiles(full_name), community_replies(id, content, created_at, profiles(full_name))`)
+        .eq('is_removed', false)
+        .order('created_at', { ascending: false })
+      setPosts(data || [])
+    } catch (err) {
+      console.error('[Community] loadPosts error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function submitPost(e) {

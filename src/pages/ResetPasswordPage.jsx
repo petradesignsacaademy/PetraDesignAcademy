@@ -1,30 +1,60 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 
-export default function ForgotPasswordPage() {
+export default function ResetPasswordPage() {
   const { theme, toggleTheme } = useTheme()
-  const [email, setEmail]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent]       = useState(false)
-  const [error, setError]     = useState('')
+  const navigate = useNavigate()
+
+  const [newPass, setNewPass]         = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [loading, setLoading]         = useState(false)
+  const [done, setDone]               = useState(false)
+  const [error, setError]             = useState('')
+  const [ready, setReady]             = useState(false)
+
+  // Supabase fires PASSWORD_RECOVERY when the user arrives via the reset link.
+  // We wait for that event before showing the form so the session is established.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true)
+      }
+    })
+
+    // Also check if we already have an active recovery session (e.g. page refresh)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (newPass.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (newPass !== confirmPass) { setError('Passwords do not match.'); return }
+
     setLoading(true)
-
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
+    const { error: err } = await supabase.auth.updateUser({ password: newPass })
     if (err) {
-      setError('Something went wrong. Please check the email and try again.')
-    } else {
-      setSent(true)
+      setError(err.message || 'Something went wrong. Please try again.')
+      setLoading(false)
+      return
     }
+    setDone(true)
     setLoading(false)
+    setTimeout(() => navigate('/login'), 2500)
+  }
+
+  const inputStyle = {
+    width: '100%', background: 'var(--surface)',
+    border: '1.5px solid var(--border)', borderRadius: 12,
+    padding: '12px 16px', fontSize: 14, color: 'var(--text)',
+    fontFamily: 'Poppins, sans-serif', outline: 'none',
+    transition: 'border-color 0.2s', boxSizing: 'border-box',
   }
 
   return (
@@ -45,13 +75,13 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', marginBottom: 20, fontFamily: 'Poppins, sans-serif' }}>ACCOUNT RECOVERY</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', marginBottom: 20, fontFamily: 'Poppins, sans-serif' }}>NEW PASSWORD</div>
           <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 52, fontWeight: 700, color: '#fff', lineHeight: 1.1, marginBottom: 20 }}>
-            Happens to<br />
-            <span style={{ fontStyle: 'italic', color: '#99569F' }}>the best of us.</span>
+            Almost<br />
+            <span style={{ fontStyle: 'italic', color: '#99569F' }}>back in.</span>
           </h2>
           <p style={{ fontFamily: 'Poppins, sans-serif', color: 'rgba(255,255,255,0.45)', fontSize: 15, lineHeight: 1.8 }}>
-            Enter your email and we'll send you a link to reset your password.
+            Choose a new password for your account.
           </p>
         </div>
 
@@ -76,32 +106,27 @@ export default function ForgotPasswordPage() {
 
         <div style={{ width: '100%', maxWidth: 400 }}>
 
-          {sent ? (
+          {done ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(34,197,94,0.1)', border: '1.5px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 24px' }}>
-                📬
+                ✅
               </div>
-              <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 38, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>Check your email</h1>
-              <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
-                We sent a reset link to <strong style={{ color: 'var(--text2)' }}>{email}</strong>. Check your inbox and click the link to reset your password.
+              <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 38, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>Password updated!</h1>
+              <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14, lineHeight: 1.8 }}>
+                Your password has been changed. Redirecting you to sign in…
               </p>
-              <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 13 }}>
-                Didn't get it?{' '}
-                <button onClick={() => setSent(false)} style={{ background: 'none', border: 'none', color: 'var(--purple)', fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: 'Poppins, sans-serif' }}>
-                  Try again
-                </button>
-              </p>
-              <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 24, color: 'var(--text3)', fontFamily: 'Poppins, sans-serif', fontSize: 13, textDecoration: 'none' }}>
-                ← Back to sign in
-              </Link>
+            </div>
+          ) : !ready ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--purple)', animation: 'spin 0.7s linear infinite', margin: '0 auto 20px' }} />
+              <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14 }}>Verifying your reset link…</p>
             </div>
           ) : (
             <>
               <div style={{ marginBottom: 36 }}>
-                <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 42, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Reset password</h1>
+                <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 42, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Set new password</h1>
                 <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14 }}>
-                  Remember it?{' '}
-                  <Link to="/login" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Sign in →</Link>
+                  Choose a strong password for your account.
                 </p>
               </div>
 
@@ -113,14 +138,28 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'Poppins, sans-serif' }}>Email address</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'Poppins, sans-serif' }}>New password</label>
                   <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    type="password"
+                    placeholder="Minimum 8 characters"
+                    value={newPass}
+                    onChange={e => setNewPass(e.target.value)}
                     required
-                    style={{ width: '100%', background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 12, padding: '12px 16px', fontSize: 14, color: 'var(--text)', fontFamily: 'Poppins, sans-serif', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
+                    style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = '#99569F'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', fontFamily: 'Poppins, sans-serif' }}>Confirm new password</label>
+                  <input
+                    type="password"
+                    placeholder="Repeat new password"
+                    value={confirmPass}
+                    onChange={e => setConfirmPass(e.target.value)}
+                    required
+                    style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#99569F'}
                     onBlur={e => e.target.style.borderColor = 'var(--border)'}
                   />
@@ -129,11 +168,11 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ background: loading ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '14px', fontSize: 15, fontWeight: 700, fontFamily: 'Poppins, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  style={{ background: loading ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '14px', fontSize: 15, fontWeight: 700, fontFamily: 'Poppins, sans-serif', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {loading
-                    ? <><div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }} />Sending...</>
-                    : 'Send reset link →'
+                    ? <><div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }} />Updating…</>
+                    : 'Update password →'
                   }
                 </button>
               </form>

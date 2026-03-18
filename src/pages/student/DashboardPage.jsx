@@ -32,7 +32,7 @@ export default function DashboardPage() {
   useEffect(() => { loadDashboard() }, [user])
 
   async function loadDashboard() {
-    if (!user) return
+    if (!user) { setLoading(false); return }
     setLoading(true)
     try {
       // Course + modules + lessons

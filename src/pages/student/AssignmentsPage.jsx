@@ -20,15 +20,20 @@ export default function AssignmentsPage() {
   useEffect(() => { loadSubmissions() }, [user])
 
   async function loadSubmissions() {
-    if (!user) return
+    if (!user) { setLoading(false); return }
     setLoading(true)
-    const { data } = await supabase
-      .from('submissions')
-      .select(`*, lessons(id, title, has_assignment, assignment_brief, module_id, modules(id, title, course_id))`)
-      .eq('student_id', user.id)
-      .order('submitted_at', { ascending: false })
-    setSubmissions(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('submissions')
+        .select(`*, lessons(id, title, has_assignment, assignment_brief, module_id, modules(id, title, course_id))`)
+        .eq('student_id', user.id)
+        .order('submitted_at', { ascending: false })
+      setSubmissions(data || [])
+    } catch (err) {
+      console.error('[Assignments] loadSubmissions error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const tabs = [

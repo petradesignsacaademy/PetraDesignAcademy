@@ -63,6 +63,8 @@ export default function CoursePage() {
       if (courseErr) throw courseErr
       setCourse(courseData)
 
+      if (!courseData) return   // no published course — empty-state UI handles this
+
       // 2. Grab all published modules + their lessons in one query
       const { data: modulesData, error: modErr } = await supabase
         .from('modules')

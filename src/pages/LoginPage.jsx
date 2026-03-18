@@ -35,6 +35,7 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .maybeSingle()
 
+    setLoading(false)
     if (profile?.role === 'admin') {
       navigate('/admin', { replace: true })
     } else if (profile?.status === 'approved') {

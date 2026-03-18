@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
       if (!data) {
         console.warn('[Auth] No profile found for user:', userId)
         setProfile(null)
+        setAuthError('No profile found for your account. Please contact support.')
         return null
       }
 
