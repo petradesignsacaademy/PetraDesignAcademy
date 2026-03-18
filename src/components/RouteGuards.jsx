@@ -56,9 +56,9 @@ export function AdminRoute({ children }) {
   const location = useLocation()
 
   if (loading)   return <LoadingScreen />
-  if (!user)     return <Navigate to="/login" state={{ from: location }} replace />
+  if (!user)     return <Navigate to="/admin-login" state={{ from: location }} replace />
   if (!profile)  return authError ? <ErrorScreen message={authError} /> : <LoadingScreen />
-  if (!isAdmin)  return <Navigate to="/dashboard" replace />
+  if (!isAdmin)  return <Navigate to="/admin-login" replace />
   return children
 }
 

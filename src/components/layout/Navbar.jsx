@@ -93,7 +93,7 @@ export default function Navbar({ variant = 'student' }) {
 
   async function handleSignOut() {
     await signOut()
-    navigate('/login')
+    navigate(isAdmin ? '/admin-login' : '/login')
     setMenuOpen(false)
   }
 

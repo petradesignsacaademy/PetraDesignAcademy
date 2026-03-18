@@ -10,6 +10,7 @@ import RegisterPage   from './pages/RegisterPage'
 import PendingPage    from './pages/PendingPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage  from './pages/ResetPasswordPage'
+import AdminLoginPage     from './pages/AdminLoginPage'
 
 // ── Student pages ─────────────────────────────────────────────────────────────
 import DashboardPage  from './pages/student/DashboardPage'
@@ -41,7 +42,8 @@ export default function App() {
             <Route path="/register"  element={<GuestRoute><RegisterPage /></GuestRoute>} />
             <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
             <Route path="/reset-password"  element={<ResetPasswordPage />} />
-            <Route path="/pending"   element={<PendingPage />} />
+            <Route path="/pending"     element={<PendingPage />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
 
             {/* ── Student (approved members only) ────────────────────────── */}
             <Route path="/dashboard"   element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
