@@ -18,11 +18,9 @@ export function AuthProvider({ children }) {
 
   const fetchProfile = useCallback(async (userId) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle()
+      // Use SECURITY DEFINER RPC — bypasses RLS entirely so admin profiles
+      // are never blocked by recursive policy evaluation.
+      const { data: rows, error } = await supabase.rpc('get_my_profile')
 
       if (error) {
         console.error('[Auth] Profile fetch error:', error.message)
@@ -30,6 +28,8 @@ export function AuthProvider({ children }) {
         setAuthError(`Profile fetch failed: ${error.message}`)
         return null
       }
+
+      const data = Array.isArray(rows) ? rows[0] ?? null : rows ?? null
 
       if (!data) {
         console.warn('[Auth] No profile found for user:', userId)
