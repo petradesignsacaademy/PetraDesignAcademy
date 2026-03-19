@@ -62,14 +62,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true
 
-    // Safety net — if loading never resolves in 10s, force it
+    // Safety net — if loading never resolves in 4s, clear stale storage and force it
     const safetyTimeout = setTimeout(() => {
       if (isMounted && loading) {
-        console.error('[Auth] TIMEOUT: forcing loading=false after 10s')
+        console.error('[Auth] TIMEOUT: clearing stale session and forcing loading=false')
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
         setLoading(false)
-        setAuthError('Authentication timed out. Please refresh the page.')
+        setUser(null)
+        setProfile(null)
       }
-    }, 10000)
+    }, 4000)
 
     // Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -124,6 +126,8 @@ export function AuthProvider({ children }) {
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signOut: async () => {
       await supabase.auth.signOut()
+      // Wipe all Supabase localStorage keys so no stale session survives
+      Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
       setUser(null)
       setProfile(null)
     },

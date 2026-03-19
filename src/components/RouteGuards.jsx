@@ -1,4 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -53,15 +54,21 @@ export function ProtectedRoute({ children }) {
 
 export function AdminRoute({ children }) {
   const { user, profile, isAdmin, loading, authError, signOut } = useAuth()
-  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Sign out non-admins in an effect — never call side-effects during render
+  useEffect(() => {
+    if (!loading && user && profile && !isAdmin) {
+      signOut().then(() => {
+        navigate('/admin-login', { replace: true, state: { error: 'Access denied. This portal is for administrators only.' } })
+      })
+    }
+  }, [loading, user, profile, isAdmin])
 
   if (loading)  return <LoadingScreen />
   if (!user)    return <Navigate to="/admin-login" replace />
   if (!profile) return authError ? <ErrorScreen message={authError} /> : <LoadingScreen />
-  if (!isAdmin) {
-    signOut()
-    return <Navigate to="/admin-login" state={{ error: 'Access denied. This portal is for administrators only.' }} replace />
-  }
+  if (!isAdmin) return <LoadingScreen /> // briefly shown while the effect above signs out
   return children
 }
 
