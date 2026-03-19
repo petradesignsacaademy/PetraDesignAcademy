@@ -52,13 +52,16 @@ export function ProtectedRoute({ children }) {
 }
 
 export function AdminRoute({ children }) {
-  const { user, profile, isAdmin, loading, authError } = useAuth()
+  const { user, profile, isAdmin, loading, authError, signOut } = useAuth()
   const location = useLocation()
 
-  if (loading)   return <LoadingScreen />
-  if (!user)     return <Navigate to="/admin-login" state={{ from: location }} replace />
-  if (!profile)  return authError ? <ErrorScreen message={authError} /> : <LoadingScreen />
-  if (!isAdmin)  return <Navigate to="/admin-login" replace />
+  if (loading)  return <LoadingScreen />
+  if (!user)    return <Navigate to="/admin-login" replace />
+  if (!profile) return authError ? <ErrorScreen message={authError} /> : <LoadingScreen />
+  if (!isAdmin) {
+    signOut()
+    return <Navigate to="/admin-login" state={{ error: 'Access denied. This portal is for administrators only.' }} replace />
+  }
   return children
 }
 

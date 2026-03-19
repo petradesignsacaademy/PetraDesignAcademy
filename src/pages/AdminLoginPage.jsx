@@ -1,43 +1,18 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function AdminLoginPage() {
   const { theme, toggleTheme } = useTheme()
-  const { signIn, signOut, isAdmin, loading: authLoading, user, profile } = useAuth()
-  const navigate = useNavigate()
+  const { signIn } = useAuth()
+  const location = useLocation()
 
-  const [email, setEmail]           = useState('')
-  const [password, setPassword]     = useState('')
-  const [error, setError]           = useState('')
-  const [loading, setLoading]       = useState(false)
-  const [showPass, setShowPass]     = useState(false)
-  const [checkingRole, setCheckingRole] = useState(false)
-
-  // If already logged in as admin, go straight to /admin
-  useEffect(() => {
-    if (!authLoading && user && profile && isAdmin) {
-      navigate('/admin', { replace: true })
-    }
-  }, [authLoading, user, profile, isAdmin, navigate])
-
-  // After sign-in, wait for AuthContext to finish loading the profile, then check role
-  useEffect(() => {
-    if (!checkingRole) return
-    if (authLoading) return   // still fetching profile — wait
-
-    // AuthContext has settled
-    setCheckingRole(false)
-    setLoading(false)
-
-    if (isAdmin) {
-      navigate('/admin', { replace: true })
-    } else {
-      signOut()
-      setError('Access denied. This portal is for administrators only.')
-    }
-  }, [checkingRole, authLoading, isAdmin, navigate, signOut])
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError]       = useState(location.state?.error || '')
+  const [loading, setLoading]   = useState(false)
+  const [showPass, setShowPass] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -51,11 +26,11 @@ export default function AdminLoginPage() {
         setLoading(false)
         return
       }
-      // Sign-in succeeded — AuthContext will now fetch the profile.
-      // Keep spinner running and wait for authLoading to settle (useEffect above).
-      setCheckingRole(true)
+      // Full page navigation so AuthContext re-initialises cleanly from getSession()
+      // — avoids all React state timing races between sign-in and profile load.
+      window.location.href = '/admin'
     } catch (err) {
-      console.error('[AdminLogin] error:', err)
+      console.error('[AdminLogin]', err)
       setError('Something went wrong. Please try again.')
       setLoading(false)
     }
