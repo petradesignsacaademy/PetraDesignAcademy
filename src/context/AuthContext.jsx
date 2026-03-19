@@ -18,18 +18,27 @@ export function AuthProvider({ children }) {
 
   const fetchProfile = useCallback(async (userId) => {
     try {
-      // Use SECURITY DEFINER RPC — bypasses RLS entirely so admin profiles
-      // are never blocked by recursive policy evaluation.
-      const { data: rows, error } = await supabase.rpc('get_my_profile')
+      // Try SECURITY DEFINER RPC first — bypasses RLS so admin profiles are never blocked.
+      // Fall back to direct table query if the function is unavailable.
+      let data = null
 
-      if (error) {
-        console.error('[Auth] Profile fetch error:', error.message)
-        setProfile(null)
-        setAuthError(`Profile fetch failed: ${error.message}`)
-        return null
+      const { data: rows, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError) {
+        data = Array.isArray(rows) ? rows[0] ?? null : rows ?? null
       }
 
-      const data = Array.isArray(rows) ? rows[0] ?? null : rows ?? null
+      if (!data) {
+        // Fallback: direct query (works for students whose RLS is straightforward)
+        const { data: row, error: tableError } = await supabase
+          .from('profiles').select('*').eq('id', userId).maybeSingle()
+        if (tableError) {
+          console.error('[Auth] Profile fetch error:', tableError.message)
+          setProfile(null)
+          setAuthError(`Profile fetch failed: ${tableError.message}`)
+          return null
+        }
+        data = row ?? null
+      }
 
       if (!data) {
         console.warn('[Auth] No profile found for user:', userId)
@@ -62,7 +71,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true
 
-    // Safety net — if loading never resolves in 4s, clear stale storage and force it
+    // Safety net — if loading never resolves in 8s, clear stale storage and force it
     const safetyTimeout = setTimeout(() => {
       if (isMounted && loading) {
         console.error('[Auth] TIMEOUT: clearing stale session and forcing loading=false')
@@ -71,7 +80,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setProfile(null)
       }
-    }, 4000)
+    }, 8000)
 
     // Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
