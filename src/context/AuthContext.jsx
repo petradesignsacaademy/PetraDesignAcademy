@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const handleSession = useCallback(async (session, source) => {
+  const handleSession = useCallback(async (session) => {
     const currentUser = session?.user ?? null
     setUser(currentUser)
     if (currentUser) {
@@ -71,22 +71,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true
 
-    // Safety net — if loading never resolves in 8s, clear stale storage and force it
+    // Last-resort safety net — if everything hangs for 8s, force navigate to login
     const safetyTimeout = setTimeout(() => {
       if (isMounted && loading) {
-        console.error('[Auth] TIMEOUT: clearing stale session and forcing loading=false')
+        console.error('[Auth] TIMEOUT: forcing redirect to login')
         Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
-        setLoading(false)
-        setUser(null)
-        setProfile(null)
+        window.location.href = '/login'
       }
     }, 8000)
 
     // Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Skip INITIAL_SESSION — handled by getSession below (avoids race condition)
+        // Skip INITIAL_SESSION — handled by initializeAuth below
         if (event === 'INITIAL_SESSION') return
+        // Skip SIGNED_IN that fires during/before initial session handling (Supabase quirk)
+        if (event === 'SIGNED_IN' && !initialSessionHandled.current) return
         if (!isMounted) return
 
         if (event !== 'TOKEN_REFRESHED') setLoading(true)
@@ -95,16 +95,38 @@ export function AuthProvider({ children }) {
       }
     )
 
-    // Then get initial session
+    // Then validate and load the initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('[Auth] getSession error:', error)
-          setAuthError(`Session error: ${error.message}`)
-        }
+        // getSession() reads from localStorage — fast, but may return a stale/expired token
+        const { data: { session } } = await supabase.auth.getSession()
         if (!isMounted) return
-        await handleSession(session, 'getSession')
+
+        if (!session) {
+          // No stored session — user is not logged in
+          setUser(null)
+          setProfile(null)
+          return
+        }
+
+        // Validate the stored session with Supabase servers (network call).
+        // This detects expired/revoked tokens immediately instead of letting
+        // the profile fetch hang with a stale auth header.
+        const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser()
+        if (!isMounted) return
+
+        if (userError || !validatedUser) {
+          // Stored session is stale — clear it now so the user goes straight to login
+          console.warn('[Auth] Stale session cleared:', userError?.message)
+          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
+          setUser(null)
+          setProfile(null)
+          return
+        }
+
+        // Valid session — load profile
+        setUser(validatedUser)
+        await fetchProfile(validatedUser.id)
       } catch (err) {
         console.error('[Auth] initializeAuth error:', err)
         if (isMounted) setAuthError(`Init error: ${err.message}`)
