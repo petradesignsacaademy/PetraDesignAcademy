@@ -90,43 +90,21 @@ export function AuthProvider({ children }) {
         if (!isMounted) return
 
         if (event !== 'TOKEN_REFRESHED') setLoading(true)
-        await handleSession(session, `onAuthStateChange(${event})`)
+        await handleSession(session)
         if (isMounted) setLoading(false)
       }
     )
 
-    // Then validate and load the initial session
+    // Then get initial session
     const initializeAuth = async () => {
       try {
-        // getSession() reads from localStorage — fast, but may return a stale/expired token
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!isMounted) return
-
-        if (!session) {
-          // No stored session — user is not logged in
-          setUser(null)
-          setProfile(null)
-          return
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('[Auth] getSession error:', error)
+          setAuthError(`Session error: ${error.message}`)
         }
-
-        // Validate the stored session with Supabase servers (network call).
-        // This detects expired/revoked tokens immediately instead of letting
-        // the profile fetch hang with a stale auth header.
-        const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser()
         if (!isMounted) return
-
-        if (userError || !validatedUser) {
-          // Stored session is stale — clear it now so the user goes straight to login
-          console.warn('[Auth] Stale session cleared:', userError?.message)
-          Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
-          setUser(null)
-          setProfile(null)
-          return
-        }
-
-        // Valid session — load profile
-        setUser(validatedUser)
-        await fetchProfile(validatedUser.id)
+        await handleSession(session)
       } catch (err) {
         console.error('[Auth] initializeAuth error:', err)
         if (isMounted) setAuthError(`Init error: ${err.message}`)
