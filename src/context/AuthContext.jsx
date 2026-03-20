@@ -71,9 +71,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true
 
-    // Last-resort safety net — if everything hangs for 8s, force navigate to login
+    // Last-resort safety net — if init never completes in 8s, force navigate to login.
+    // Uses the ref (not the `loading` state) to avoid the stale-closure problem.
     const safetyTimeout = setTimeout(() => {
-      if (isMounted && loading) {
+      if (isMounted && !initialSessionHandled.current) {
         console.error('[Auth] TIMEOUT: forcing redirect to login')
         Object.keys(localStorage).forEach(k => { if (k.startsWith('sb-')) localStorage.removeItem(k) })
         window.location.href = '/login'
