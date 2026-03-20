@@ -46,7 +46,7 @@ export function ProtectedRoute({ children }) {
   if (loading)  return <LoadingScreen />
   if (!user)    return <Navigate to="/login" state={{ from: location }} replace />
   if (!profile) return authError ? <ErrorScreen message={authError} /> : <LoadingScreen />
-  if (isAdmin)    return children
+  if (isAdmin)    return <Navigate to="/admin" replace />
   if (isApproved) return children
   if (isPending)  return <Navigate to="/pending" replace />
   return <Navigate to="/login" replace />

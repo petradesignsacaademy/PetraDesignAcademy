@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { supabase } from '../lib/supabase'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -20,28 +18,19 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
-    const { data, error: signInError } = await signIn(email, password)
-
-    if (signInError) {
-      setError('Incorrect email or password. Please try again.')
-      setLoading(false)
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', data.user.id)
-      .maybeSingle()
-
-    setLoading(false)
-    if (profile?.role === 'admin') {
-      navigate('/admin', { replace: true })
-    } else if (profile?.status === 'approved') {
+    try {
+      const { error: signInError } = await signIn(email, password)
+      if (signInError) {
+        setError('Incorrect email or password. Please try again.')
+        return
+      }
+      // AuthContext loads profile via onAuthStateChange.
+      // GuestRoute will redirect to the right place once profile is ready.
       navigate('/dashboard', { replace: true })
-    } else {
-      navigate('/pending', { replace: true })
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
