@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { getLessonByKey } from '../../data/courseData'
 
 function StarPicker({ value, onChange }) {
   const [hover, setHover] = useState(0)
@@ -27,13 +28,18 @@ export default function AdminAssignments() {
 
   async function loadSubmissions() {
     setLoading(true)
-    const { data } = await supabase
-      .from('submissions')
-      .select('*, profiles(full_name, email, avatar_url), lessons(title, module_id, modules(title))')
-      .eq('status', filter)
-      .order('submitted_at', { ascending: false })
-    setSubmissions(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('submissions')
+        .select('*, profiles(full_name, email, avatar_url)')
+        .eq('status', filter)
+        .order('submitted_at', { ascending: false })
+      setSubmissions(data || [])
+    } catch (err) {
+      console.error('[AdminAssignments] loadSubmissions error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function openReview(sub) {
@@ -45,6 +51,7 @@ export default function AdminAssignments() {
   async function submitFeedback() {
     if (!feedback && !stars) return
     setSaving(true)
+    const lesson = getLessonByKey(selected.lesson_id)
     await supabase.from('submissions').update({
       feedback_text: feedback,
       star_rating:   stars || null,
@@ -57,7 +64,7 @@ export default function AdminAssignments() {
       user_id: selected.student_id,
       type:    'feedback_posted',
       title:   'Petra reviewed your assignment!',
-      body:    `Feedback on: ${selected.lessons?.title}`,
+      body:    `Feedback on: ${lesson?.title || selected.lesson_id}`,
       link:    `/courses`,
     })
 
@@ -65,9 +72,6 @@ export default function AdminAssignments() {
     setSelected(null)
     loadSubmissions()
   }
-
-  const counts = { submitted: 0, reviewed: 0 }
-  // We load per-filter so just track via label
 
   return (
     <AdminLayout>
@@ -101,7 +105,9 @@ export default function AdminAssignments() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {submissions.map(sub => (
+          {submissions.map(sub => {
+            const lesson = getLessonByKey(sub.lesson_id)
+            return (
             <div key={sub.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #99569F, #ED518E)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, fontFamily: 'Poppins, sans-serif', flexShrink: 0 }}>
@@ -109,10 +115,10 @@ export default function AdminAssignments() {
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 14, color: 'var(--text)', marginBottom: 3 }}>
-                    {sub.profiles?.full_name} — <span style={{ color: 'var(--purple)' }}>{sub.lessons?.title}</span>
+                    {sub.profiles?.full_name} — <span style={{ color: 'var(--purple)' }}>{lesson?.title || sub.lesson_id}</span>
                   </div>
                   <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>
-                    {sub.lessons?.modules?.title} · Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {lesson ? `Module ${lesson.moduleIdx + 1}` : ''} · Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                   {sub.written_answer && (
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text2)', marginTop: 6, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8, maxWidth: 500 }}>
@@ -143,7 +149,7 @@ export default function AdminAssignments() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
@@ -158,7 +164,7 @@ export default function AdminAssignments() {
 
             <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
               <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
-                {selected.profiles?.full_name} — {selected.lessons?.title}
+                {selected.profiles?.full_name} — {getLessonByKey(selected.lesson_id)?.title || selected.lesson_id}
               </div>
               {selected.written_answer && (
                 <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text2)', marginTop: 6, fontStyle: 'italic' }}>

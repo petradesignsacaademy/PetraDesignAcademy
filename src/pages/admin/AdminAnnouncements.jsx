@@ -17,12 +17,17 @@ export default function AdminAnnouncements() {
 
   async function loadAnnouncements() {
     setLoading(true)
-    const { data } = await supabase
-      .from('announcements')
-      .select('*, profiles(full_name)')
-      .order('created_at', { ascending: false })
-    setAnnouncements(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('announcements')
+        .select('*, profiles(full_name)')
+        .order('created_at', { ascending: false })
+      setAnnouncements(data || [])
+    } catch (err) {
+      console.error('[AdminAnnouncements] loadAnnouncements error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function sendAnnouncement() {

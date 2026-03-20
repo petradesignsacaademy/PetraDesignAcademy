@@ -19,13 +19,18 @@ export default function AdminStudents() {
 
   async function loadStudents() {
     setLoading(true)
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'student')
-      .order('created_at', { ascending: false })
-    setStudents(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'student')
+        .order('created_at', { ascending: false })
+      setStudents(data || [])
+    } catch (err) {
+      console.error('[AdminStudents] loadStudents error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function updateStatus(id, status) {

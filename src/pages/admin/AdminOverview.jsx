@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { getLessonByKey } from '../../data/courseData'
 
 function StatCard({ icon, value, label, color, bg }) {
   return (
@@ -31,7 +32,7 @@ export default function AdminOverview() {
       const [studentsRes, pendingRes, submissionsRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'student').eq('status', 'approved'),
         supabase.from('profiles').select('*').eq('role', 'student').eq('status', 'pending').order('created_at', { ascending: false }),
-        supabase.from('submissions').select('*, profiles(full_name, email), lessons(title, modules(title))').eq('status', 'submitted').order('submitted_at', { ascending: false }).limit(5),
+        supabase.from('submissions').select('*, profiles(full_name, email)').eq('status', 'submitted').order('submitted_at', { ascending: false }).limit(5),
       ])
 
       setStats({
@@ -171,12 +172,17 @@ export default function AdminOverview() {
                     {sub.profiles?.full_name?.[0] || '?'}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {sub.profiles?.full_name} — {sub.lessons?.title}
-                    </div>
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>
-                      {sub.lessons?.modules?.title} · {new Date(sub.submitted_at).toLocaleDateString()}
-                    </div>
+                    {(() => {
+                      const lesson = getLessonByKey(sub.lesson_id)
+                      return <>
+                        <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {sub.profiles?.full_name} — {lesson?.title || sub.lesson_id}
+                        </div>
+                        <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>
+                          {lesson ? `Module ${lesson.moduleIdx + 1}` : ''} · {new Date(sub.submitted_at).toLocaleDateString()}
+                        </div>
+                      </>
+                    })()}
                   </div>
                 </div>
                 <button onClick={() => navigate('/admin/assignments')} style={{ background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', flexShrink: 0 }}>

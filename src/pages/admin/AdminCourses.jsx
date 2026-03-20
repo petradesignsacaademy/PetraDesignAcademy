@@ -155,6 +155,11 @@ export default function AdminCourses() {
         )}
       </div>
 
+      {/* Notice: course content is now managed in code, not Supabase */}
+      <div style={{ background: 'rgba(249,165,52,0.08)', border: '1px solid rgba(249,165,52,0.25)', borderRadius: 12, padding: '12px 18px', marginBottom: 20, fontFamily: 'Poppins, sans-serif', fontSize: 13, color: '#F9A534' }}>
+        ⚠️ Course content (videos, modules, lessons) is now hardcoded in <strong>src/data/courseData.js</strong>. Changes made here do not affect what students see. Edit the code file to update course content.
+      </div>
+
       {loading && <div style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14, padding: 24 }}>Loading...</div>}
 
       {/* Course header card */}
