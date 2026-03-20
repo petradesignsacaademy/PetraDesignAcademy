@@ -38,30 +38,38 @@ export default function LessonPage() {
   }, [mIdx, lIdx, user])
 
   async function loadProgress() {
-    const keys = modLessons.map(l => l.key)
-    if (keys.length === 0) return
-    const { data } = await supabase
-      .from('course_progress')
-      .select('lesson_key, is_completed')
-      .eq('student_id', user.id)
-      .in('lesson_key', keys)
-    const map = {}
-    data?.forEach(r => { map[r.lesson_key] = r.is_completed })
-    setProgress(map)
-    setIsCompleted(map[lesson.key] || false)
+    try {
+      const keys = modLessons.map(l => l.key)
+      if (keys.length === 0) return
+      const { data } = await supabase
+        .from('course_progress')
+        .select('lesson_key, is_completed')
+        .eq('student_id', user.id)
+        .in('lesson_key', keys)
+      const map = {}
+      data?.forEach(r => { map[r.lesson_key] = r.is_completed })
+      setProgress(map)
+      setIsCompleted(map[lesson.key] || false)
+    } catch (err) {
+      console.error('[LessonPage] loadProgress error:', err)
+    }
   }
 
   async function loadSubmission() {
-    const { data } = await supabase
-      .from('submissions')
-      .select('*')
-      .eq('student_id', user.id)
-      .eq('lesson_id', lesson.key)
-      .maybeSingle()
-    if (data) {
-      setExistingSubmission(data)
-      setSubmitted(true)
-      setAnswerText(data.written_answer || '')
+    try {
+      const { data } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('student_id', user.id)
+        .eq('lesson_id', lesson.key)
+        .maybeSingle()
+      if (data) {
+        setExistingSubmission(data)
+        setSubmitted(true)
+        setAnswerText(data.written_answer || '')
+      }
+    } catch (err) {
+      console.error('[LessonPage] loadSubmission error:', err)
     }
   }
 
