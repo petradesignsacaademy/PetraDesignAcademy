@@ -48,7 +48,7 @@ export default function App() {
             {/* ── Student (approved members only) ────────────────────────── */}
             <Route path="/dashboard"   element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/courses"     element={<ProtectedRoute><CoursePage /></ProtectedRoute>} />
-            <Route path="/courses/:courseId/modules/:moduleId/lessons/:lessonId"
+            <Route path="/courses/m/:mIdx/l/:lIdx"
                                        element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
             <Route path="/assignments" element={<ProtectedRoute><AssignmentsPage /></ProtectedRoute>} />
             <Route path="/community"   element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
