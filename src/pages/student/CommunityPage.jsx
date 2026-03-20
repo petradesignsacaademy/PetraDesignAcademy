@@ -32,7 +32,7 @@ export default function CommunityPage() {
       const { data } = await supabase
         .from('community_posts')
         .select(`*, profiles(full_name), community_replies(id, content, created_at, profiles(full_name))`)
-        .eq('is_removed', false)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false })
       setPosts(data || [])
     } catch (err) {
@@ -46,7 +46,7 @@ export default function CommunityPage() {
     e.preventDefault()
     if (!newPost.trim()) return
     setPosting(true)
-    await supabase.from('community_posts').insert({ author_id: user.id, content: newPost.trim() })
+    await supabase.from('community_posts').insert({ student_id: user.id, content: newPost.trim() })
     setNewPost('')
     setPosting(false)
     loadPosts()
@@ -56,7 +56,7 @@ export default function CommunityPage() {
     e.preventDefault()
     if (!replyText.trim()) return
     setReplying(true)
-    await supabase.from('community_replies').insert({ post_id: postId, author_id: user.id, content: replyText.trim() })
+    await supabase.from('community_replies').insert({ post_id: postId, student_id: user.id, content: replyText.trim() })
     setReplyText('')
     setReplyTo(null)
     setReplying(false)
