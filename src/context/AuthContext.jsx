@@ -84,13 +84,23 @@ export function AuthProvider({ children }) {
     // Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Skip INITIAL_SESSION — handled by initializeAuth below
+        // INITIAL_SESSION — handled by initializeAuth below
         if (event === 'INITIAL_SESSION') return
-        // Skip SIGNED_IN that fires during/before initial session handling (Supabase quirk)
+        // TOKEN_REFRESHED — Supabase manages the token internally; no state update needed
+        if (event === 'TOKEN_REFRESHED') return
+        // SIGNED_IN during startup — already handled by initializeAuth
         if (event === 'SIGNED_IN' && !initialSessionHandled.current) return
         if (!isMounted) return
 
-        if (event !== 'TOKEN_REFRESHED') setLoading(true)
+        if (event === 'SIGNED_OUT') {
+          // Clear state immediately without a loading flash
+          setUser(null)
+          setProfile(null)
+          return
+        }
+
+        // Genuine new SIGNED_IN (from another tab, magic link, etc.) or USER_UPDATED
+        setLoading(true)
         await handleSession(session)
         if (isMounted) setLoading(false)
       }
