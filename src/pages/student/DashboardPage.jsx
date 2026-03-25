@@ -115,7 +115,7 @@ export default function DashboardPage() {
               <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text3)', marginBottom:12 }}>lessons completed</div>
               {/* Per-module breakdown */}
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {COURSE.modules.map((mod) => {
+                {COURSE.modules.filter(m => !m.pdfOnly).map((mod) => {
                   const done  = mod.lessons.filter(l => progress[l.key]).length
                   const total = mod.lessons.length
                   const pct   = total > 0 ? Math.round((done / total) * 100) : 0

@@ -146,9 +146,11 @@ export default function CoursePage() {
                   style={{ padding:'20px 24px', cursor:'pointer', display:'flex', alignItems:'center', gap:16, userSelect:'none' }}
                 >
                   <div style={{ width:40, height:40, borderRadius:12, background:`${mod.color}18`, border:`1.5px solid ${mod.color}30`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    {isModDone
-                      ? <span style={{ color:mod.color, fontSize:16 }}>✓</span>
-                      : <span style={{ fontFamily:'Cormorant Upright, serif', fontSize:18, fontWeight:700, color:mod.color }}>{String(mIdx).padStart(2,'0')}</span>
+                    {mod.pdfOnly
+                      ? <span style={{ fontSize:18 }}>📄</span>
+                      : isModDone
+                        ? <span style={{ color:mod.color, fontSize:16 }}>✓</span>
+                        : <span style={{ fontFamily:'Cormorant Upright, serif', fontSize:18, fontWeight:700, color:mod.color }}>{String(mIdx + 1).padStart(2,'0')}</span>
                     }
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
@@ -157,49 +159,86 @@ export default function CoursePage() {
                       {isModDone && <span style={{ background:'rgba(34,197,94,0.1)', color:'#22C55E', fontSize:10, fontWeight:700, padding:'2px 10px', borderRadius:999, fontFamily:'Poppins, sans-serif' }}>COMPLETE</span>}
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ flex:1, height:4, background:'var(--bg3)', borderRadius:999, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width:`${modPct}%`, background:mod.color, borderRadius:999, transition:'width 0.6s ease' }} />
-                      </div>
-                      <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)', fontWeight:600, flexShrink:0 }}>{modCompleted}/{modTotal}</span>
+                      {mod.pdfOnly ? (
+                        <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:700, color:mod.color, background:`${mod.color}15`, padding:'2px 10px', borderRadius:999 }}>PDF RESOURCES</span>
+                      ) : (
+                        <>
+                          <div style={{ flex:1, height:4, background:'var(--bg3)', borderRadius:999, overflow:'hidden' }}>
+                            <div style={{ height:'100%', width:`${modPct}%`, background:mod.color, borderRadius:999, transition:'width 0.6s ease' }} />
+                          </div>
+                          <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)', fontWeight:600, flexShrink:0 }}>{modCompleted}/{modTotal}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div style={{ color:'var(--text3)', fontSize:18, transition:'transform 0.25s', transform:isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink:0 }}>⌄</div>
                 </div>
 
-                {/* Lessons */}
+                {/* Lessons or PDF resources */}
                 {isOpen && (
                   <div style={{ borderTop:`1px solid ${mod.color}20` }}>
-                    {modLessons.map((lesson, lIdx) => {
-                      const isDone = progress[lesson.key] === true
-                      const isNext = next?.key === lesson.key
-                      return (
-                        <div
-                          key={lesson.key}
-                          onClick={() => goToLesson(lesson)}
-                          style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 24px', borderBottom: lIdx < modLessons.length - 1 ? '1px solid var(--border)' : 'none', cursor:'pointer', background: isNext ? `${mod.color}07` : 'transparent', transition:'background 0.15s' }}
-                          onMouseEnter={e => { if (!isNext) e.currentTarget.style.background='var(--bg2)' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = isNext ? `${mod.color}07` : 'transparent' }}
-                        >
-                          <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background: isDone ? mod.color : isNext ? `${mod.color}15` : 'var(--bg3)', border: isDone ? 'none' : isNext ? `2px solid ${mod.color}` : '2px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            {isDone
-                              ? <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>✓</span>
-                              : isNext
-                                ? <span style={{ fontSize:10 }}>▶</span>
-                                : <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:600, color:'var(--text3)' }}>{lIdx + 1}</span>
-                            }
+                    {mod.pdfOnly ? (
+                      // PDF-only module
+                      <div style={{ padding:'20px 24px' }}>
+                        <p style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text2)', lineHeight:1.7, marginBottom: mod.pdfs?.length ? 20 : 0 }}>
+                          {mod.description}
+                        </p>
+                        {mod.pdfs?.length > 0 ? (
+                          <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+                            {mod.pdfs.map((pdf, i) => (
+                              <div key={i}>
+                                <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, fontWeight:700, color:'var(--text)', marginBottom:10 }}>{pdf.title}</div>
+                                <iframe
+                                  src={`https://drive.google.com/file/d/${pdf.driveId}/preview`}
+                                  width="100%"
+                                  height="480"
+                                  allow="autoplay"
+                                  style={{ border:'1px solid var(--border)', borderRadius:12 }}
+                                  title={pdf.title}
+                                />
+                              </div>
+                            ))}
                           </div>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ fontFamily:'Poppins, sans-serif', fontSize:14, fontWeight: isNext ? 600 : 500, color: isDone ? 'var(--text2)' : 'var(--text)', marginBottom:2 }}>
-                              {lesson.title}
+                        ) : (
+                          <div style={{ background:'var(--bg2)', borderRadius:12, padding:'20px 24px', textAlign:'center' }}>
+                            <div style={{ fontSize:32, marginBottom:10 }}>📄</div>
+                            <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text3)' }}>PDF resources coming soon.</div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      modLessons.map((lesson, lIdx) => {
+                        const isDone = progress[lesson.key] === true
+                        const isNext = next?.key === lesson.key
+                        return (
+                          <div
+                            key={lesson.key}
+                            onClick={() => goToLesson(lesson)}
+                            style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 24px', borderBottom: lIdx < modLessons.length - 1 ? '1px solid var(--border)' : 'none', cursor:'pointer', background: isNext ? `${mod.color}07` : 'transparent', transition:'background 0.15s' }}
+                            onMouseEnter={e => { if (!isNext) e.currentTarget.style.background='var(--bg2)' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = isNext ? `${mod.color}07` : 'transparent' }}
+                          >
+                            <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background: isDone ? mod.color : isNext ? `${mod.color}15` : 'var(--bg3)', border: isDone ? 'none' : isNext ? `2px solid ${mod.color}` : '2px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              {isDone
+                                ? <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>✓</span>
+                                : isNext
+                                  ? <span style={{ fontSize:10 }}>▶</span>
+                                  : <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:600, color:'var(--text3)' }}>{lIdx + 1}</span>
+                              }
                             </div>
-                            {lesson.hasAssignment && (
-                              <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️ Assignment</span>
-                            )}
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ fontFamily:'Poppins, sans-serif', fontSize:14, fontWeight: isNext ? 600 : 500, color: isDone ? 'var(--text2)' : 'var(--text)', marginBottom:2 }}>
+                                {lesson.title}
+                              </div>
+                              {lesson.hasAssignment && (
+                                <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️ Assignment</span>
+                              )}
+                            </div>
+                            <span style={{ color: isNext ? mod.color : 'var(--text3)', fontSize:16, flexShrink:0 }}>›</span>
                           </div>
-                          <span style={{ color: isNext ? mod.color : 'var(--text3)', fontSize:16, flexShrink:0 }}>›</span>
-                        </div>
-                      )
-                    })}
+                        )
+                      })
+                    )}
                   </div>
                 )}
               </div>

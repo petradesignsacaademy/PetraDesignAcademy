@@ -1,13 +1,18 @@
 // ── Static course data ────────────────────────────────────────────────────────
 // Videos are hardcoded here so the course works without Supabase content entry.
-// To move a lesson to a different module, cut it from one lessons array and
-// paste it into another. lesson keys (m0-l0, m1-l2, etc.) auto-generate from
-// module index + lesson index — do not set them manually.
+// To add a lesson, insert an object into the correct module's lessons array.
+// Lesson keys (m0-l0, m1-l2, etc.) auto-generate from module + lesson index.
+//
+// Module 2 is PDF-only (no videos). Add Google Drive file IDs to the pdfs array:
+//   { title: 'Worksheet name', driveId: 'the_id_from_the_google_drive_url' }
+// Use the /preview URL so students can read but not download.
 
 export const COURSE = {
   title: 'Professional Brand Identity Masterclass',
-  description: 'A complete end-to-end programme covering everything you need to design, price, and deliver professional brand identity projects for real clients.',
+  description: 'A complete, structured programme covering everything you need to design, price, and deliver professional brand identity projects for real clients.',
   modules: [
+
+    // ── MODULE 1 ──────────────────────────────────────────────────────────────
     {
       title: 'Course Orientation',
       color: '#9896B8',
@@ -18,13 +23,10 @@ export const COURSE = {
           videoId: 'heLzt8pf5S8',
           description: 'Understand the difference between a logo, a brand identity, and branding — and why it matters before you design anything.',
         },
-        {
-          title: 'Why Creation is Important as a Designer',
-          videoId: 'YS-ENhLyvLs',
-          description: 'Explore the mindset shift from consumer to creator and why building a body of work is essential to a sustainable design career.',
-        },
       ],
     },
+
+    // ── MODULE 2 ──────────────────────────────────────────────────────────────
     {
       title: 'Essential Tools Training',
       color: '#47C6EB',
@@ -47,33 +49,26 @@ export const COURSE = {
         },
       ],
     },
+
+    // ── MODULE 3 — PDF ONLY ───────────────────────────────────────────────────
+    // Add Google Drive file IDs to the pdfs array below.
+    // Share each file as "Anyone with the link → Viewer" in Google Drive,
+    // then copy the ID from the URL: drive.google.com/file/d/THIS_PART/view
     {
-      title: 'Design Fundamentals',
+      title: 'Design Resources & Templates',
       color: '#99569F',
-      icon: '✦',
-      lessons: [
-        {
-          title: 'Building the Right Mindset',
-          videoId: 'LgG9JDmp2j4',
-          description: 'Develop the professional mindset of a working designer — how to handle feedback, manage creative blocks, and stay consistent.',
-        },
-        {
-          title: 'What Type of Content to Post',
-          videoId: 'NkSrQRVOVVo',
-          description: 'Learn what to share online as a designer, how to attract your ideal clients through content, and what platforms to focus on.',
-        },
-        {
-          title: 'Building a Portfolio',
-          videoId: 'ugKro873jfw',
-          description: 'Build a portfolio that wins clients — what to include, how to present case studies, and where to host your work.',
-        },
-        {
-          title: 'Personal Branding',
-          videoId: 'TF5fS0xKpow',
-          description: 'Define your own brand as a designer: your niche, voice, aesthetic, and positioning in the market.',
-        },
+      icon: '📄',
+      pdfOnly: true,
+      description: 'Downloadable worksheets, brand strategy templates, and design reference guides to support your work throughout the course.',
+      lessons: [],
+      pdfs: [
+        // { title: 'Brand Strategy Worksheet', driveId: 'PASTE_DRIVE_ID_HERE' },
+        // { title: 'Creative Brief Template',  driveId: 'PASTE_DRIVE_ID_HERE' },
+        // { title: 'Client Questionnaire',     driveId: 'PASTE_DRIVE_ID_HERE' },
       ],
     },
+
+    // ── MODULE 4 ──────────────────────────────────────────────────────────────
     {
       title: 'Brand Strategy Core',
       color: '#F9A534',
@@ -96,6 +91,8 @@ export const COURSE = {
         },
       ],
     },
+
+    // ── MODULE 5 ──────────────────────────────────────────────────────────────
     {
       title: 'Logo Design',
       color: '#ED518E',
@@ -126,18 +123,10 @@ export const COURSE = {
           videoId: 'zR1zgojfLnk',
           description: 'Present your logo concepts professionally, guide client feedback constructively, and handle revision rounds with confidence.',
         },
-        {
-          title: 'Pricing Your Work',
-          videoId: 'Yl3mRNtvdxE',
-          description: 'Learn how to price logo and brand identity projects — value-based pricing, packages, and how to stop undercharging.',
-        },
-        {
-          title: 'Finding Your First Client',
-          videoId: '03xfEn3PKA8',
-          description: 'Practical strategies for landing your first paid client — outreach, referrals, platforms, and how to start conversations.',
-        },
       ],
     },
+
+    // ── MODULE 6 ──────────────────────────────────────────────────────────────
     {
       title: 'Brand Identity Execution',
       color: '#22C55E',
@@ -242,6 +231,44 @@ export const COURSE = {
           videoId: 'GcMPsZ0JvnE',
           description: 'Wrap up the project professionally — file delivery, final invoice, client offboarding, and how to ask for referrals and testimonials.',
         },
+      ],
+    },
+
+    // ── MODULE 7 ──────────────────────────────────────────────────────────────
+    {
+      title: 'Building Your Design Career',
+      color: '#8B5CF6',
+      icon: '✦',
+      lessons: [
+        {
+          title: 'Building a Portfolio',
+          videoId: 'ugKro873jfw',
+          description: 'Build a portfolio that wins clients — what to include, how to present case studies, and where to host your work.',
+        },
+        {
+          title: 'Personal Branding',
+          videoId: 'TF5fS0xKpow',
+          description: 'Define your own brand as a designer: your niche, voice, aesthetic, and positioning in the market.',
+        },
+      ],
+    },
+
+    // ── MODULE 8 ──────────────────────────────────────────────────────────────
+    {
+      title: 'Pricing & Getting Clients',
+      color: '#E85D04',
+      icon: '◐',
+      lessons: [
+        {
+          title: 'Pricing Your Work',
+          videoId: 'Yl3mRNtvdxE',
+          description: 'Learn how to price logo and brand identity projects — value-based pricing, packages, and how to stop undercharging.',
+        },
+        {
+          title: 'Finding Your First Client',
+          videoId: '03xfEn3PKA8',
+          description: 'Practical strategies for landing your first paid client — outreach, referrals, platforms, and how to start conversations.',
+        },
         {
           title: 'What Next',
           videoId: 'HzBuUCLsxpg',
@@ -249,12 +276,38 @@ export const COURSE = {
         },
       ],
     },
+
+    // ── MODULE 9 ──────────────────────────────────────────────────────────────
+    {
+      title: 'The Designer Mindset',
+      color: '#06B6D4',
+      icon: '◎',
+      lessons: [
+        {
+          title: 'Why Creation is Important as a Designer',
+          videoId: 'YS-ENhLyvLs',
+          description: 'Explore the mindset shift from consumer to creator and why building a body of work is essential to a sustainable design career.',
+        },
+        {
+          title: 'Building the Right Mindset',
+          videoId: 'LgG9JDmp2j4',
+          description: 'Develop the professional mindset of a working designer — how to handle feedback, manage creative blocks, and stay consistent.',
+        },
+        {
+          title: 'What Type of Content to Post',
+          videoId: 'NkSrQRVOVVo',
+          description: 'Learn what to share online as a designer, how to attract your ideal clients through content, and what platforms to focus on.',
+        },
+      ],
+    },
+
   ],
 }
 
 // ── Derived helpers ───────────────────────────────────────────────────────────
 
 // Attach stable string keys to every lesson: m0-l0, m0-l1, m1-l0, etc.
+// pdfOnly modules have no lessons so they are skipped automatically.
 COURSE.modules.forEach((mod, mIdx) => {
   mod.index = mIdx
   mod.lessons.forEach((lesson, lIdx) => {
@@ -264,8 +317,10 @@ COURSE.modules.forEach((mod, mIdx) => {
   })
 })
 
-// Flat list of all lessons in order
-export const ALL_LESSONS = COURSE.modules.flatMap(m => m.lessons)
+// Flat list of all video lessons in order (excludes pdfOnly modules)
+export const ALL_LESSONS = COURSE.modules
+  .filter(m => !m.pdfOnly)
+  .flatMap(m => m.lessons)
 
 // Look up a lesson by its key
 export function getLessonByKey(key) {
@@ -277,7 +332,7 @@ export function getLesson(mIdx, lIdx) {
   return COURSE.modules[mIdx]?.lessons[lIdx] || null
 }
 
-// Previous / next lesson (across module boundaries)
+// Previous / next lesson (across module boundaries, skipping pdfOnly modules)
 export function getAdjacentLessons(mIdx, lIdx) {
   const flat  = ALL_LESSONS
   const idx   = flat.findIndex(l => l.moduleIdx === mIdx && l.lessonIdx === lIdx)
