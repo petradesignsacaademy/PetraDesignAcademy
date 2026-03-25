@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { COURSE, ALL_LESSONS } from '../data/courseData'
+import { supabase } from '../lib/supabase'
 
 const SELAR_URL = 'https://selar.com/2625473152'
 
@@ -22,14 +23,39 @@ function FadeIn({ children, delay = 0 }) {
 
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme()
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled,          setScrolled]          = useState(false)
+  const [menuOpen,          setMenuOpen]           = useState(false)
+  const [portfolioProjects, setPortfolioProjects]  = useState([])
+  const [portfolioLoading,  setPortfolioLoading]   = useState(true)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', onScroll)
+    loadPortfolioPreview()
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  async function loadPortfolioPreview() {
+    try {
+      const { data } = await supabase
+        .from('portfolio_projects')
+        .select('id, title, category, cover_url, is_featured')
+        .eq('is_visible', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false })
+        .limit(6)
+      setPortfolioProjects(data || [])
+    } catch {
+      // silently fail — don't show errors on homepage
+    } finally {
+      setPortfolioLoading(false)
+    }
+  }
+
+  const CAT_LABEL = {
+    brand: 'Brand Identity', visual: 'Visual Design', print: 'Print & Packaging',
+    social: 'Social Media',  event: 'Events',          web: 'Website Design',
+  }
 
   const navLinks = ['Course', 'How it works', 'About']
 
@@ -64,6 +90,7 @@ export default function LandingPage() {
 
         {/* Desktop nav links */}
         <div className="landing-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Link to="/portfolio" style={{ padding: '6px 16px', fontSize: 13, fontWeight: 600, color: 'var(--purple)', textDecoration: 'none', borderRadius: 999, fontFamily: 'Poppins, sans-serif' }}>Portfolio</Link>
           {navLinks.map(label => (
             <a key={label} href={`#${label.toLowerCase().replace(/ /g, '-')}`}
               style={{ padding: '6px 16px', fontSize: 13, fontWeight: 500, color: 'var(--text2)', textDecoration: 'none', borderRadius: 999, fontFamily: 'Poppins, sans-serif', transition: 'color 0.2s' }}
@@ -102,6 +129,7 @@ export default function LandingPage() {
       {menuOpen && (
         <div style={{ position: 'fixed', top: 68, left: 0, right: 0, zIndex: 199, background: 'var(--bg2)', borderBottom: '1px solid var(--border)', padding: '16px 20px 24px', animation: 'slideDown 0.22s ease' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
+            <Link to="/portfolio" onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '13px 16px', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--purple)', textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>Portfolio</Link>
             {navLinks.map(label => (
               <a key={label} href={`#${label.toLowerCase().replace(/ /g, '-')}`} onClick={() => setMenuOpen(false)}
                 style={{ display: 'block', padding: '13px 16px', borderRadius: 12, fontSize: 15, fontWeight: 600, color: 'var(--text)', textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}
@@ -310,6 +338,76 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── PORTFOLIO PREVIEW ── */}
+      {(portfolioLoading || portfolioProjects.length > 0) && (
+        <section id="portfolio" style={{ padding: 'clamp(60px, 10vw, 100px) clamp(20px, 5vw, 48px)', background: 'var(--bg2)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <FadeIn>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, gap: 20, flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 3, color: 'var(--text3)', display: 'block', marginBottom: 10 }}>SELECTED WORK</span>
+                  <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(32px, 6vw, 48px)', fontWeight: 700, color: 'var(--text)', lineHeight: 1.1, marginBottom: 10 }}>
+                    Recent <span style={{ fontStyle: 'italic', color: 'var(--purple)' }}>Work</span>
+                  </h2>
+                  <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 14, color: 'var(--text2)', maxWidth: 420, lineHeight: 1.7 }}>
+                    A glimpse of brand identities crafted for real clients.
+                  </p>
+                </div>
+                <Link to="/portfolio" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 22px', border: '1.5px solid var(--border)', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', whiteSpace: 'nowrap', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--purple)'; e.currentTarget.style.color='var(--purple)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text2)' }}
+                >View all work →</Link>
+              </div>
+            </FadeIn>
+
+            {portfolioLoading ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="port-prev-grid">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} style={{ background: 'var(--surface)', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <div style={{ aspectRatio: '4/3', background: 'var(--bg3)', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                    <div style={{ padding: '12px 16px 16px' }}>
+                      <div style={{ height: 10, width: '40%', background: 'var(--bg3)', borderRadius: 6, marginBottom: 8, animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                      <div style={{ height: 16, width: '70%', background: 'var(--bg3)', borderRadius: 6, animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="port-prev-grid">
+                {portfolioProjects.map((project, i) => (
+                  <FadeIn key={project.id} delay={i * 60}>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', transition: 'transform 0.25s, box-shadow 0.25s' }}
+                      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 12px 40px rgba(0,0,0,0.1)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+                    >
+                      <div style={{ aspectRatio: '4/3', background: 'var(--bg3)', overflow: 'hidden' }}>
+                        {project.cover_url
+                          ? <img src={project.cover_url} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #12133C, #2D1060)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 32, opacity: 0.2 }}>🖼️</span></div>
+                        }
+                      </div>
+                      <div style={{ padding: '12px 16px 16px' }}>
+                        <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--purple)', marginBottom: 4 }}>{CAT_LABEL[project.category] || project.category}</div>
+                        <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{project.title}</div>
+                      </div>
+                    </div>
+                  </FadeIn>
+                ))}
+              </div>
+            )}
+
+            <FadeIn delay={200}>
+              <div style={{ textAlign: 'center', marginTop: 36 }}>
+                <Link to="/portfolio" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 36px', border: '2px solid var(--purple)', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontSize: 14, fontWeight: 700, color: 'var(--purple)', textDecoration: 'none', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background='linear-gradient(135deg,#99569F,#ED518E)'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='transparent' }}
+                  onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--purple)'; e.currentTarget.style.borderColor='var(--purple)' }}
+                >See all projects →</Link>
+              </div>
+            </FadeIn>
+          </div>
+        </section>
+      )}
+
       {/* ── FINAL CTA ── */}
       <section style={{ padding: 'clamp(40px, 8vw, 80px) clamp(20px, 5vw, 48px) clamp(60px, 10vw, 100px)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -348,15 +446,19 @@ export default function LandingPage() {
           © {new Date().getFullYear()} Petra Designs. All rights reserved.
         </span>
         <div style={{ display: 'flex', gap: 20 }}>
-          <Link to="/login" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)' }}>Sign in</Link>
-          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}>Enroll now</a>
+          <Link to="/portfolio" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', textDecoration: 'none' }}>Portfolio</Link>
+          <Link to="/login" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', textDecoration: 'none' }}>Sign in</Link>
+          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Enroll now</a>
         </div>
       </footer>
 
       <style>{`
-        @keyframes fadeUp  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes fadeUp    { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse     { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @media (max-width: 900px) { .port-prev-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 560px) { .port-prev-grid { grid-template-columns: 1fr !important; } }
         @media (max-width: 768px) {
           .landing-nav-links     { display: none !important; }
           .landing-nav-right     { display: none !important; }

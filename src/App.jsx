@@ -12,6 +12,7 @@ import ForgotPasswordPage    from './pages/ForgotPasswordPage'
 import ResetPasswordPage     from './pages/ResetPasswordPage'
 import AdminLoginPage        from './pages/AdminLoginPage'
 import PaymentSuccessPage    from './pages/PaymentSuccessPage'
+import PortfolioPage          from './pages/PortfolioPage'
 
 // ── Student pages ─────────────────────────────────────────────────────────────
 import DashboardPage  from './pages/student/DashboardPage'
@@ -23,6 +24,7 @@ import CertificatePage from './pages/student/CertificatePage'
 import AccountPage    from './pages/student/AccountPage'
 
 // ── Admin pages ───────────────────────────────────────────────────────────────
+import AdminPortfolio     from './pages/admin/AdminPortfolio'
 import AdminOverview      from './pages/admin/AdminOverview'
 import AdminStudents      from './pages/admin/AdminStudents'
 import AdminCourses       from './pages/admin/AdminCourses'
@@ -45,6 +47,7 @@ export default function App() {
             <Route path="/reset-password"  element={<ResetPasswordPage />} />
             <Route path="/pending"          element={<PendingPage />} />
             <Route path="/payment-success"  element={<PaymentSuccessPage />} />
+            <Route path="/portfolio"        element={<PortfolioPage />} />
             <Route path="/admin-login" element={<AdminLoginPage />} />
 
             {/* ── Student (approved members only) ────────────────────────── */}
@@ -65,6 +68,7 @@ export default function App() {
             <Route path="/admin/assignments"   element={<AdminRoute><AdminAssignments /></AdminRoute>} />
             <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
             <Route path="/admin/revenue"       element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+            <Route path="/admin/portfolio"     element={<AdminRoute><AdminPortfolio /></AdminRoute>} />
 
             {/* ── Fallback ────────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/" replace />} />
