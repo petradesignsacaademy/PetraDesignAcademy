@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         email,
         {
           data: { full_name: name },
-          redirectTo: `${SITE_URL}/login`,
+          redirectTo: `${SITE_URL}/reset-password`,
         }
       )
 

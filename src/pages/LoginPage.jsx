@@ -97,8 +97,8 @@ export default function LoginPage() {
           <div style={{ marginBottom: 36 }}>
             <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 42, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Sign in</h1>
             <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14 }}>
-              Don't have access yet?{' '}
-              <Link to="/register" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Request to join →</Link>
+              Not enrolled yet?{' '}
+              <a href="https://selar.com/2625473152" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Enroll on Selar →</a>
             </p>
           </div>
 
@@ -142,9 +142,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p style={{ marginTop: 28, textAlign: 'center', fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)' }}>
-            New here?{' '}
-            <Link to="/register" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Request access to the course</Link>
+          {/* Magic link hint for new Selar students */}
+          <div style={{ marginTop: 24, background: 'rgba(71,198,235,0.07)', border: '1px solid rgba(71,198,235,0.2)', borderRadius: 12, padding: '12px 16px', fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text2)', lineHeight: 1.65 }}>
+            💌 <strong>Just enrolled via Selar?</strong> Check your email for a setup link to activate your account. No password needed — just click the link.
+          </div>
+
+          <p style={{ marginTop: 16, textAlign: 'center', fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)' }}>
+            Not enrolled yet?{' '}
+            <a href="https://selar.com/2625473152" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Enroll on Selar →</a>
           </p>
         </div>
       </div>
