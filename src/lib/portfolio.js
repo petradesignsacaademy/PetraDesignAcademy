@@ -16,7 +16,9 @@ const JBAPI   = 'https://api.jsonbin.io/v3/b'
 
 // ── Read all projects from JSONBin ────────────────────────────────────────────
 export async function fetchProjects() {
-  const res  = await fetch(`${JBAPI}/${BIN_ID}/latest`)
+  const res  = await fetch(`${JBAPI}/${BIN_ID}/latest`, {
+    headers: { 'X-Access-Key': BIN_KEY },
+  })
   const data = await res.json()
   return data.record?.projects || []
 }
