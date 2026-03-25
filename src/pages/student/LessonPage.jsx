@@ -22,6 +22,7 @@ export default function LessonPage() {
   const [tab,         setTab]         = useState('overview')
   const [saving,      setSaving]      = useState(false)
 
+  const [pdfOpen,            setPdfOpen]            = useState(false)
   const [answerText,         setAnswerText]         = useState('')
   const [file,               setFile]               = useState(null)
   const [submitting,         setSubmitting]         = useState(false)
@@ -198,6 +199,33 @@ export default function LessonPage() {
               </div>
             )}
 
+            {/* PDF resource toggle — visible from any tab */}
+            {lesson.pdf && (
+              <div style={{ marginBottom:24 }}>
+                <button
+                  onClick={() => setPdfOpen(o => !o)}
+                  style={{ background: pdfOpen ? 'rgba(153,86,159,0.1)' : 'var(--surface)', border:`1.5px solid ${pdfOpen ? 'var(--purple)' : 'var(--border)'}`, color: pdfOpen ? 'var(--purple)' : 'var(--text2)', padding:'9px 18px', borderRadius:999, fontFamily:'Poppins, sans-serif', fontWeight:600, fontSize:13, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8, transition:'all 0.2s' }}
+                >
+                  📄 {pdfOpen ? 'Hide' : 'View'} PDF Resource
+                </button>
+                {pdfOpen && (
+                  <div style={{ marginTop:12, border:'1px solid var(--border)', borderRadius:14, overflow:'hidden' }}>
+                    <div style={{ background:'var(--surface)', padding:'10px 16px', borderBottom:'1px solid var(--border)', fontFamily:'Poppins, sans-serif', fontSize:13, fontWeight:600, color:'var(--text2)' }}>
+                      📄 {lesson.pdf.title}
+                    </div>
+                    <iframe
+                      src={`https://drive.google.com/file/d/${lesson.pdf.driveId}/preview`}
+                      width="100%"
+                      height="520"
+                      allow="autoplay"
+                      style={{ border:'none', display:'block' }}
+                      title={lesson.pdf.title}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Tabs */}
             <div style={{ display:'flex', borderBottom:'1px solid var(--border)', marginBottom:24 }}>
               {[
@@ -319,7 +347,7 @@ export default function LessonPage() {
             <Link to="/courses" style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'Poppins, sans-serif', fontSize:12, color:'var(--text3)', textDecoration:'none', marginBottom:10, fontWeight:600 }}>
               ← All modules
             </Link>
-            <div style={{ fontFamily:'Poppins, sans-serif', fontSize:10, fontWeight:700, letterSpacing:2, color:'var(--text3)', marginBottom:4 }}>MODULE {String(moduleIdx).padStart(2,'0')}</div>
+            <div style={{ fontFamily:'Poppins, sans-serif', fontSize:10, fontWeight:700, letterSpacing:2, color:'var(--text3)', marginBottom:4 }}>MODULE {String(moduleIdx + 1).padStart(2,'0')}</div>
             <div style={{ fontFamily:'Cormorant Upright, serif', fontSize:18, fontWeight:700, color:'var(--text)', lineHeight:1.2 }}>{mod.title}</div>
             <div style={{ marginTop:12 }}>
               <div style={{ height:4, background:'var(--bg3)', borderRadius:999, overflow:'hidden' }}>
@@ -351,7 +379,10 @@ export default function LessonPage() {
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? 'var(--purple)' : isDone ? 'var(--text2)' : 'var(--text)', lineHeight:1.3, marginBottom:3 }}>{l.title}</div>
-                    {l.hasAssignment && <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️</span>}
+                    <div style={{ display:'flex', gap:4 }}>
+                      {l.hasAssignment && <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️</span>}
+                      {l.pdf && <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>📄</span>}
+                    </div>
                   </div>
                 </div>
               )

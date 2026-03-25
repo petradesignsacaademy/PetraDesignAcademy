@@ -22,6 +22,7 @@ export const COURSE = {
           title: 'What is Brand Identity? (Logo vs Identity vs Branding)',
           videoId: 'heLzt8pf5S8',
           description: 'Understand the difference between a logo, a brand identity, and branding — and why it matters before you design anything.',
+          pdf: { title: 'Introduction — Welcome to the World of Brand Identity', driveId: '1pudjLOSXcM_THAqcCHh-P7aTpwQonyVi' },
         },
       ],
     },
@@ -36,6 +37,7 @@ export const COURSE = {
           title: 'What Makes a Logo Effective?',
           videoId: 'TAdCeAy2qnE',
           description: 'Break down the principles behind logos that stand the test of time — simplicity, scalability, distinction, and versatility.',
+          pdf: { title: 'RGB vs. CMYK', driveId: '11usF2pnef7xFzdddUXeYxgiyjZ_lhySd' },
         },
         {
           title: 'Adobe Illustrator Basics — Your Logo Design Workspace',
@@ -62,9 +64,10 @@ export const COURSE = {
       description: 'Downloadable worksheets, brand strategy templates, and design reference guides to support your work throughout the course.',
       lessons: [],
       pdfs: [
-        // { title: 'Brand Strategy Worksheet', driveId: 'PASTE_DRIVE_ID_HERE' },
-        // { title: 'Creative Brief Template',  driveId: 'PASTE_DRIVE_ID_HERE' },
-        // { title: 'Client Questionnaire',     driveId: 'PASTE_DRIVE_ID_HERE' },
+        { title: 'Brand Strategy Worksheet',  driveId: '1NNg9WiNgCtZwvHB2wsBC6b2bYAU99IIT' },
+        { title: 'Creative Brief Template',   driveId: '1ukGeW6OdAIVPRURNZnhWrjPXQ4IcVDsu' },
+        { title: 'Client Questionnaire',      driveId: '1txyIXtYgXOhSqx3tMRRncONtFsgwkxaB' },
+        { title: 'Design Reference Guide',    driveId: '1fF1j6zG-5BNnlfGjjBt6iuhO2rtMMXZp' },
       ],
     },
 
@@ -107,6 +110,7 @@ export const COURSE = {
           title: 'Logo Grid Systems',
           videoId: 'NVRlSti_7GM',
           description: 'Use grid systems to create logos with mathematical precision, balance, and proportional harmony.',
+          pdf: { title: 'Precision and Structure — Using Logo Grids & Geometry', driveId: '1o-WQ60IXJfjc9lXcLd-zZERrm8rpP0Az' },
         },
         {
           title: 'Digital Execution in Illustrator (Part A)',
