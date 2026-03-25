@@ -46,21 +46,31 @@ export default function CommunityPage() {
     e.preventDefault()
     if (!newPost.trim()) return
     setPosting(true)
-    await supabase.from('community_posts').insert({ student_id: user.id, content: newPost.trim() })
-    setNewPost('')
-    setPosting(false)
-    loadPosts()
+    try {
+      await supabase.from('community_posts').insert({ student_id: user.id, content: newPost.trim() })
+      setNewPost('')
+      loadPosts()
+    } catch (err) {
+      console.error('[Community] submitPost error:', err)
+    } finally {
+      setPosting(false)
+    }
   }
 
   async function submitReply(e, postId) {
     e.preventDefault()
     if (!replyText.trim()) return
     setReplying(true)
-    await supabase.from('community_replies').insert({ post_id: postId, student_id: user.id, content: replyText.trim() })
-    setReplyText('')
-    setReplyTo(null)
-    setReplying(false)
-    loadPosts()
+    try {
+      await supabase.from('community_replies').insert({ post_id: postId, student_id: user.id, content: replyText.trim() })
+      setReplyText('')
+      setReplyTo(null)
+      loadPosts()
+    } catch (err) {
+      console.error('[Community] submitReply error:', err)
+    } finally {
+      setReplying(false)
+    }
   }
 
   function timeAgo(date) {

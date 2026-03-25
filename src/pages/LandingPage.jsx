@@ -1,17 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { COURSE, ALL_LESSONS } from '../data/courseData'
 
 const SELAR_URL = 'https://selar.com/2625473152'
-
-const modules = [
-  { id: 0, title: 'Course Orientation',         lessons: 2,  color: '#9896B8', icon: '◉' },
-  { id: 1, title: 'Essential Tools Training',   lessons: 2,  color: '#47C6EB', icon: '⚙' },
-  { id: 2, title: 'Design Fundamentals',        lessons: 4,  color: '#99569F', icon: '✦' },
-  { id: 3, title: 'Brand Strategy Core',        lessons: 3,  color: '#F9A534', icon: '◈' },
-  { id: 4, title: 'Logo Design',                lessons: 7,  color: '#ED518E', icon: '◆' },
-  { id: 5, title: 'Brand Identity Execution',   lessons: 15, color: '#22C55E', icon: '▣' },
-]
 
 function FadeIn({ children, delay = 0 }) {
   const ref = useRef(null)
@@ -168,7 +160,7 @@ export default function LandingPage() {
 
         {/* Stats bar */}
         <div style={{ opacity: 0, animation: 'fadeUp 0.7s 0.55s ease forwards', borderTop: '1px solid var(--border)', paddingTop: 40, display: 'flex', flexWrap: 'wrap', gap: 0, justifyContent: 'center' }}>
-          {[['100+', 'Students enrolled'], ['6', 'Course modules'], ['30+', 'Video lessons'], ['100%', 'Personal feedback']].map(([val, label], i, arr) => (
+          {[['100+', 'Students enrolled'], [String(COURSE.modules.length), 'Course modules'], [String(ALL_LESSONS.length) + '+', 'Video lessons'], ['100%', 'Personal feedback']].map(([val, label], i, arr) => (
             <div key={i} style={{ padding: 'clamp(0px, 1vw, 0px) clamp(20px, 4vw, 40px)', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none', textAlign: 'center', marginBottom: 8 }}>
               <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 700, color: 'var(--text)' }}>{val}</div>
               <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(10px, 1.5vw, 12px)', color: 'var(--text3)', fontWeight: 500, marginTop: 4 }}>{label}</div>
@@ -187,26 +179,26 @@ export default function LandingPage() {
                 What you'll <span style={{ fontStyle: 'italic' }}>master</span>
               </h2>
               <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 15, marginTop: 16, maxWidth: 480, margin: '16px auto 0' }}>
-                Six carefully structured modules taking you from foundations to a complete, professional brand identity system.
+                {COURSE.modules.length} carefully structured modules taking you from foundations to a complete, professional brand identity system.
               </p>
             </div>
           </FadeIn>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-            {modules.map((m, i) => (
-              <FadeIn key={m.id} delay={i * 80}>
+            {COURSE.modules.map((m, i) => (
+              <FadeIn key={i} delay={i * 80}>
                 <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 24, overflow: 'hidden', transition: 'transform 0.25s, box-shadow 0.25s', cursor: 'default', height: '100%' }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 16px 48px ${m.color}20` }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
                   <div style={{ background: `linear-gradient(135deg, ${m.color}22, ${m.color}08)`, borderBottom: `1px solid ${m.color}20`, padding: '28px 28px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 10 }}>MODULE {String(m.id).padStart(2, '0')}</div>
+                      <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text3)', marginBottom: 10 }}>MODULE {String(i + 1).padStart(2, '0')}</div>
                       <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 700, color: 'var(--text)', lineHeight: 1.1 }}>{m.title}</h3>
                     </div>
                     <div style={{ width: 48, height: 48, borderRadius: 14, background: `${m.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: m.color, flexShrink: 0, marginLeft: 12 }}>{m.icon}</div>
                   </div>
                   <div style={{ padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                    <span style={{ fontSize: 13, fontFamily: 'Poppins, sans-serif', color: 'var(--text3)' }}>🎬 {m.lessons} video lessons</span>
+                    <span style={{ fontSize: 13, fontFamily: 'Poppins, sans-serif', color: 'var(--text3)' }}>🎬 {m.lessons.length} video lessons</span>
                     <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, fontWeight: 700, color: m.color, background: `${m.color}12`, padding: '4px 12px', borderRadius: 999 }}>+ PDF resources</span>
                   </div>
                 </div>
@@ -271,7 +263,7 @@ export default function LandingPage() {
                 I teach because I want to bridge that gap — to provide a learning experience that is practical, structured, and accessible, so you don't have to struggle the way I did. My goal is to help you build real skills, gain confidence, and become a designer capable of delivering professional brand identities without having to break the bank.
               </p>
               <div style={{ display: 'flex', gap: 'clamp(12px, 3vw, 16px)', flexWrap: 'wrap' }}>
-                {[['100+', 'Students taught'], ['6', 'Course modules'], ['100%', 'Personal feedback']].map(([val, label]) => (
+                {[['100+', 'Students taught'], [String(COURSE.modules.length), 'Course modules'], ['100%', 'Personal feedback']].map(([val, label]) => (
                   <div key={label} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 700, color: 'var(--text)' }}>{val}</div>
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>{label}</div>
