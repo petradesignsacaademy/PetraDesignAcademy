@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 
+const SELAR_URL = 'https://selar.com/2625473152'
+
 const modules = [
   { id: 0, title: 'Course Orientation',         lessons: 2,  color: '#9896B8', icon: '◉' },
   { id: 1, title: 'Essential Tools Training',   lessons: 2,  color: '#47C6EB', icon: '⚙' },
@@ -87,9 +89,9 @@ export default function LandingPage() {
           <Link to="/login" style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', border: '1.5px solid var(--border)', borderRadius: 999, transition: 'all 0.2s' }}>
             Sign in
           </Link>
-          <Link to="/register" style={{ padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', background: 'linear-gradient(135deg, #99569F, #ED518E)', borderRadius: 999 }}>
-            Request access
-          </Link>
+          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', background: 'linear-gradient(135deg, #99569F, #ED518E)', borderRadius: 999 }}>
+            Enroll — ₦25,000
+          </a>
         </div>
 
         {/* Hamburger */}
@@ -121,9 +123,9 @@ export default function LandingPage() {
             <Link to="/login" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '13px 16px', borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', border: '1.5px solid var(--border)', fontFamily: 'Poppins, sans-serif' }}>
               Sign in
             </Link>
-            <Link to="/register" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none', background: 'linear-gradient(135deg, #99569F, #ED518E)', fontFamily: 'Poppins, sans-serif' }}>
-              Request access →
-            </Link>
+            <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none', background: 'linear-gradient(135deg, #99569F, #ED518E)', fontFamily: 'Poppins, sans-serif' }}>
+              Enroll Now — ₦25,000 →
+            </a>
           </div>
         </div>
       )}
@@ -137,7 +139,7 @@ export default function LandingPage() {
         <div style={{ opacity: 0, animation: 'fadeUp 0.6s 0.1s ease forwards', marginBottom: 24 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(153,86,159,0.1)', border: '1px solid rgba(153,86,159,0.25)', color: '#99569F', padding: '6px 18px', borderRadius: 999, fontSize: 12, fontWeight: 700, fontFamily: 'Poppins, sans-serif', letterSpacing: 1 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#99569F', display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            NOW ENROLLING — LIMITED SPOTS
+            ENROLL NOW — ₦25,000
           </span>
         </div>
 
@@ -156,9 +158,9 @@ export default function LandingPage() {
 
         {/* CTAs */}
         <div style={{ opacity: 0, animation: 'fadeUp 0.7s 0.45s ease forwards', display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 60, padding: '0 16px' }}>
-          <Link to="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', padding: 'clamp(12px, 2vw, 15px) clamp(24px, 4vw, 36px)', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(13px, 2vw, 15px)', textDecoration: 'none', boxShadow: '0 8px 32px rgba(153,86,159,0.35)' }}>
-            Request access →
-          </Link>
+          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', padding: 'clamp(12px, 2vw, 15px) clamp(24px, 4vw, 36px)', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 'clamp(13px, 2vw, 15px)', textDecoration: 'none', boxShadow: '0 8px 32px rgba(153,86,159,0.35)' }}>
+            Enroll Now — ₦25,000 →
+          </a>
           <a href="#course" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--surface)', color: 'var(--text2)', padding: 'clamp(12px, 2vw, 15px) clamp(24px, 4vw, 36px)', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 'clamp(13px, 2vw, 15px)', textDecoration: 'none', border: '1.5px solid var(--border)' }}>
             Preview the course
           </a>
@@ -327,14 +329,19 @@ export default function LandingPage() {
                 <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(32px, 6vw, 56px)', fontWeight: 700, color: '#fff', lineHeight: 1.1, marginBottom: 16 }}>
                   Ready to start<br /><span style={{ fontStyle: 'italic', color: '#ED518E' }}>your design journey?</span>
                 </h2>
-                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(13px, 2vw, 16px)', color: 'rgba(255,255,255,0.5)', marginBottom: 36, lineHeight: 1.7 }}>
-                  Enrollment is by approval only. Request your spot — Petra reviews every application personally.
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(13px, 2vw, 16px)', color: 'rgba(255,255,255,0.5)', marginBottom: 8, lineHeight: 1.7 }}>
+                  Pay once. Lifetime access. Petra personally reviews every assignment.
                 </p>
-                <Link to="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', padding: '16px 40px', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 15, textDecoration: 'none', boxShadow: '0 8px 32px rgba(237,81,142,0.35)' }}>
-                  Request access →
-                </Link>
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 'clamp(13px, 2vw, 15px)', color: 'rgba(255,255,255,0.35)', marginBottom: 36, lineHeight: 1.5 }}>
+                  <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>₦30,000</span>
+                  {'  '}
+                  <strong style={{ color: '#ED518E', fontSize: 'clamp(15px, 2.5vw, 18px)' }}>₦25,000</strong>
+                </p>
+                <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', padding: '16px 40px', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 15, textDecoration: 'none', boxShadow: '0 8px 32px rgba(237,81,142,0.35)' }}>
+                  Enroll Now →
+                </a>
                 <p style={{ marginTop: 20, fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-                  Already approved? <Link to="/login" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Sign in here</Link>
+                  Already enrolled? <Link to="/login" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Sign in here</Link>
                 </p>
               </div>
             </div>
@@ -350,7 +357,7 @@ export default function LandingPage() {
         </span>
         <div style={{ display: 'flex', gap: 20 }}>
           <Link to="/login" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)' }}>Sign in</Link>
-          <Link to="/register" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}>Request access</Link>
+          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600 }}>Enroll now</a>
         </div>
       </footer>
 

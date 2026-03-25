@@ -29,16 +29,20 @@ export default function AdminOverview() {
   async function loadData() {
     setLoading(true)
     try {
-      const [studentsRes, pendingRes, submissionsRes] = await Promise.all([
+      const [studentsRes, pendingRes, submissionsRes, paymentsRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'student').eq('status', 'approved'),
         supabase.from('profiles').select('*').eq('role', 'student').eq('status', 'pending').order('created_at', { ascending: false }),
         supabase.from('submissions').select('*, profiles(full_name, email)').eq('status', 'submitted').order('submitted_at', { ascending: false }).limit(5),
+        supabase.from('payments').select('amount'),
       ])
+
+      const revenue = (paymentsRes.data || []).reduce((sum, p) => sum + (p.amount || 0), 0)
 
       setStats({
         students:    studentsRes.count || 0,
         pending:     pendingRes.data?.length || 0,
         submissions: submissionsRes.data?.length || 0,
+        revenue,
       })
       setPending(pendingRes.data || [])
       setQueue(submissionsRes.data || [])
@@ -51,20 +55,12 @@ export default function AdminOverview() {
 
   async function approveStudent(id) {
     await supabase.from('profiles').update({ status: 'approved' }).eq('id', id)
-    // Send notification
     await supabase.from('notifications').insert({
       user_id: id, type: 'approved',
       title: 'Your access has been approved!',
       body: 'Welcome to Petra Designs. You can now access the full course.',
       link: '/courses',
     })
-    // Enroll in all published courses
-    const { data: courses } = await supabase
-      .from('courses').select('id').eq('is_published', true)
-    if (courses?.length) {
-      const enrollments = courses.map(c => ({ student_id: id, course_id: c.id }))
-      await supabase.from('enrollments').upsert(enrollments, { onConflict: 'student_id,course_id', ignoreDuplicates: true })
-    }
     loadData()
   }
 
@@ -94,7 +90,7 @@ export default function AdminOverview() {
         <StatCard icon="👩‍🎨" value={loading ? '—' : stats.students}    label="Approved students"     color="var(--purple)" bg="rgba(153,86,159,0.08)" />
         <StatCard icon="⏳"  value={loading ? '—' : stats.pending}     label="Awaiting approval"     color="var(--amber)"  bg="rgba(249,165,52,0.08)" />
         <StatCard icon="📬"  value={loading ? '—' : stats.submissions} label="Assignments to review"  color="var(--pink)"   bg="rgba(237,81,142,0.08)" />
-        <StatCard icon="💰"  value="—"                                  label="Revenue (coming soon)"  color="var(--blue)"   bg="rgba(71,198,235,0.08)" />
+        <StatCard icon="💰"  value={loading ? '—' : '₦' + Number(stats.revenue).toLocaleString('en-NG')} label="Total revenue" color="var(--blue)" bg="rgba(71,198,235,0.08)" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
