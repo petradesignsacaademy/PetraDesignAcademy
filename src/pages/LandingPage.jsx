@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { COURSE, ALL_LESSONS } from '../data/courseData'
-import { supabase } from '../lib/supabase'
+import { fetchProjects } from '../lib/portfolio'
 
 const SELAR_URL = 'https://selar.com/2625473152'
 
@@ -37,14 +37,12 @@ export default function LandingPage() {
 
   async function loadPortfolioPreview() {
     try {
-      const { data } = await supabase
-        .from('portfolio_projects')
-        .select('id, title, category, cover_url, is_featured')
-        .eq('is_visible', true)
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: false })
-        .limit(6)
-      setPortfolioProjects(data || [])
+      const all = await fetchProjects()
+      const visible = all
+        .filter(p => p.is_visible !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || (b.created_at || 0) - (a.created_at || 0))
+        .slice(0, 6)
+      setPortfolioProjects(visible)
     } catch {
       // silently fail — don't show errors on homepage
     } finally {

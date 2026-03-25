@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import { supabase } from '../lib/supabase'
+import { fetchProjects } from '../lib/portfolio'
 
 const SELAR_URL = 'https://selar.com/2625473152'
 
@@ -74,13 +74,11 @@ export default function PortfolioPage() {
 
   async function loadProjects() {
     try {
-      const { data } = await supabase
-        .from('portfolio_projects')
-        .select('*')
-        .eq('is_visible', true)
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: false })
-      setProjects(data || [])
+      const all = await fetchProjects()
+      const visible = all
+        .filter(p => p.is_visible !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || (b.created_at || 0) - (a.created_at || 0))
+      setProjects(visible)
     } catch (err) {
       console.error('[Portfolio]', err)
     } finally {

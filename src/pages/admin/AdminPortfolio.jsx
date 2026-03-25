@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { fetchProjects, pushProjects, uploadImage, uid } from '../../lib/portfolio'
 
 const CATEGORIES = [
   { key: 'brand',  label: 'Brand Identity' },
@@ -18,7 +18,7 @@ const CAT_LABEL = {
 
 const EMPTY_FORM = {
   title: '', category: 'brand', year: '', description: '',
-  cover_url: '', website_url: '', sort_order: 0, is_featured: false, is_visible: true,
+  website_url: '', sort_order: 0, is_featured: false, is_visible: true,
 }
 
 function Toast({ toasts }) {
@@ -42,14 +42,15 @@ export default function AdminPortfolio() {
   const [deleteConfirm,  setDeleteConfirm]  = useState(null)
   const [coverFile,      setCoverFile]      = useState(null)
   const [coverPreview,   setCoverPreview]   = useState(null)
-  const [extraFiles,     setExtraFiles]     = useState([])
-  const [existingImages, setExistingImages] = useState([])
+  const [coverUrl,       setCoverUrl]       = useState('')      // existing URL when editing
+  const [extraFiles,     setExtraFiles]     = useState([])      // new File objects
+  const [existingImages, setExistingImages] = useState([])      // already-uploaded URLs
   const [toasts,         setToasts]         = useState([])
   const [sort,           setSort]           = useState('newest')
   const coverRef = useRef(null)
   const extraRef = useRef(null)
 
-  useEffect(() => { loadProjects() }, [])
+  useEffect(() => { load() }, [])
 
   function addToast(message, type = 'success') {
     const id = Date.now()
@@ -57,29 +58,16 @@ export default function AdminPortfolio() {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000)
   }
 
-  async function loadProjects() {
+  async function load() {
     setLoading(true)
     try {
-      const { data } = await supabase
-        .from('portfolio_projects')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: false })
-      setProjects(data || [])
+      setProjects(await fetchProjects())
     } catch (err) {
-      console.error('[AdminPortfolio]', err)
+      console.error('[AdminPortfolio] load:', err)
+      addToast('Failed to load projects.', 'error')
     } finally {
       setLoading(false)
     }
-  }
-
-  async function uploadImage(file) {
-    const ext  = file.name.split('.').pop()
-    const path = `projects/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage.from('portfolio-images').upload(path, file, { upsert: false })
-    if (error) throw error
-    const { data: urlData } = supabase.storage.from('portfolio-images').getPublicUrl(path)
-    return urlData.publicUrl
   }
 
   async function handleSubmit(e) {
@@ -87,37 +75,46 @@ export default function AdminPortfolio() {
     if (!form.title || !form.category) return
     setSaving(true)
     try {
-      let coverUrl = editingId ? (form.cover_url || null) : null
-      if (coverFile) coverUrl = await uploadImage(coverFile)
+      // Upload cover if a new file was chosen
+      let finalCoverUrl = coverUrl
+      if (coverFile) finalCoverUrl = await uploadImage(coverFile)
 
-      const imageUrls = [...existingImages]
+      // Upload any new extra images
+      const allImages = [...existingImages]
       for (const f of extraFiles) {
-        imageUrls.push(await uploadImage(f))
+        allImages.push(await uploadImage(f))
       }
 
-      const payload = {
+      const proj = {
+        id:          editingId || uid(),
         title:       form.title,
         category:    form.category,
         year:        form.year        || null,
         description: form.description || null,
-        cover_url:   coverUrl,
-        images:      imageUrls,
+        cover_url:   finalCoverUrl    || null,
+        images:      allImages,
         website_url: form.website_url || null,
         sort_order:  parseInt(form.sort_order) || 0,
         is_featured: form.is_featured,
         is_visible:  form.is_visible,
-        updated_at:  new Date().toISOString(),
+        updated_at:  Date.now(),
+        created_at:  editingId
+          ? (projects.find(p => p.id === editingId)?.created_at || Date.now())
+          : Date.now(),
       }
 
+      let updated
       if (editingId) {
-        await supabase.from('portfolio_projects').update(payload).eq('id', editingId)
+        updated = projects.map(p => p.id === editingId ? proj : p)
         addToast('Project updated.')
       } else {
-        await supabase.from('portfolio_projects').insert(payload)
+        updated = [proj, ...projects]
         addToast('Project added.')
       }
+
+      await pushProjects(updated)
+      setProjects(updated)
       resetForm()
-      loadProjects()
     } catch (err) {
       console.error(err)
       addToast('Failed to save project.', 'error')
@@ -133,15 +130,15 @@ export default function AdminPortfolio() {
       category:    project.category,
       year:        project.year        || '',
       description: project.description || '',
-      cover_url:   project.cover_url   || '',
       website_url: project.website_url || '',
       sort_order:  project.sort_order  || 0,
       is_featured: project.is_featured || false,
       is_visible:  project.is_visible  !== false,
     })
-    setExistingImages(project.images || [])
+    setCoverUrl(project.cover_url || '')
     setCoverPreview(project.cover_url || null)
     setCoverFile(null)
+    setExistingImages(project.images || [])
     setExtraFiles([])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -151,53 +148,58 @@ export default function AdminPortfolio() {
     setForm(EMPTY_FORM)
     setCoverFile(null)
     setCoverPreview(null)
+    setCoverUrl('')
     setExtraFiles([])
     setExistingImages([])
     setDeleteConfirm(null)
   }
 
   async function toggleVisibility(project) {
-    await supabase.from('portfolio_projects').update({ is_visible: !project.is_visible }).eq('id', project.id)
-    setProjects(ps => ps.map(p => p.id === project.id ? { ...p, is_visible: !p.is_visible } : p))
+    const updated = projects.map(p =>
+      p.id === project.id ? { ...p, is_visible: !p.is_visible } : p
+    )
+    await pushProjects(updated)
+    setProjects(updated)
   }
 
   async function deleteProject(id) {
     if (deleteConfirm !== id) { setDeleteConfirm(id); return }
     try {
-      await supabase.from('portfolio_projects').delete().eq('id', id)
-      setProjects(ps => ps.filter(p => p.id !== id))
+      const updated = projects.filter(p => p.id !== id)
+      await pushProjects(updated)
+      setProjects(updated)
       if (editingId === id) resetForm()
       setDeleteConfirm(null)
       addToast('Project deleted.', 'error')
-    } catch (err) {
+    } catch {
       addToast('Failed to delete.', 'error')
     }
   }
 
   const sortedProjects = [...projects].sort((a, b) => {
-    if (sort === 'newest') return new Date(b.created_at) - new Date(a.created_at)
-    if (sort === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
+    if (sort === 'newest') return (b.created_at || 0) - (a.created_at || 0)
+    if (sort === 'oldest') return (a.created_at || 0) - (b.created_at || 0)
     if (sort === 'order')  return (a.sort_order || 0) - (b.sort_order || 0)
     if (sort === 'cat')    return a.category.localeCompare(b.category)
     return 0
   })
+
+  const totalExtraImages = existingImages.length + extraFiles.length
 
   const inp = {
     width: '100%', background: 'var(--surface)', border: '1.5px solid var(--border)',
     borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--text)',
     fontFamily: 'Poppins, sans-serif', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s',
   }
-  const lbl = { display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 12, color: 'var(--text3)', marginBottom: 6 }
-  const focus = e => { e.target.style.borderColor = '#99569F' }
-  const blur  = e => { e.target.style.borderColor = 'var(--border)' }
-
-  const totalExtraImages = existingImages.length + extraFiles.length
+  const lbl    = { display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 12, color: 'var(--text3)', marginBottom: 6 }
+  const onFocus = e => { e.target.style.borderColor = '#99569F' }
+  const onBlur  = e => { e.target.style.borderColor = 'var(--border)' }
 
   return (
     <AdminLayout>
       <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }} className="portfolio-admin-wrap">
 
-        {/* ── LEFT PANEL: Form ── */}
+        {/* ── LEFT: Form ── */}
         <div style={{ width: 360, flexShrink: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '24px 22px', position: 'sticky', top: 100, maxHeight: 'calc(100vh - 130px)', overflowY: 'auto' }} className="portfolio-form-panel">
           <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 26, fontWeight: 700, color: 'var(--text)', marginBottom: 20 }}>
             {editingId ? 'Edit Project' : 'Add Project'}
@@ -208,13 +210,13 @@ export default function AdminPortfolio() {
             {/* Title */}
             <div>
               <label style={lbl}>Title *</label>
-              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Project title" required style={inp} onFocus={focus} onBlur={blur} />
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Project title" required style={inp} onFocus={onFocus} onBlur={onBlur} />
             </div>
 
             {/* Category */}
             <div>
               <label style={lbl}>Category *</label>
-              <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ ...inp, cursor: 'pointer' }} onFocus={focus} onBlur={blur}>
+              <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ ...inp, cursor: 'pointer' }} onFocus={onFocus} onBlur={onBlur}>
                 {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
             </div>
@@ -222,13 +224,13 @@ export default function AdminPortfolio() {
             {/* Year */}
             <div>
               <label style={lbl}>Year</label>
-              <input value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} placeholder="e.g. 2024" style={inp} onFocus={focus} onBlur={blur} />
+              <input value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} placeholder="e.g. 2024" style={inp} onFocus={onFocus} onBlur={onBlur} />
             </div>
 
             {/* Description */}
             <div>
               <label style={lbl}>Description</label>
-              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the project..." rows={3} style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} onFocus={focus} onBlur={blur} />
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the project..." rows={3} style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} onFocus={onFocus} onBlur={onBlur} />
             </div>
 
             {/* Cover image */}
@@ -244,6 +246,7 @@ export default function AdminPortfolio() {
                   <>
                     <div style={{ fontSize: 22, marginBottom: 4 }}>🖼️</div>
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>Click to upload cover</div>
+                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 2, opacity: 0.7 }}>Uploads to Cloudinary</div>
                   </>
                 )}
                 <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
@@ -252,7 +255,7 @@ export default function AdminPortfolio() {
                 }} />
               </div>
               {coverPreview && (
-                <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setForm(f => ({ ...f, cover_url: '' })) }}
+                <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setCoverUrl('') }}
                   style={{ marginTop: 6, background: 'none', border: 'none', color: '#EF4444', fontFamily: 'Poppins, sans-serif', fontSize: 12, cursor: 'pointer', padding: 0 }}>
                   Remove cover
                 </button>
@@ -301,14 +304,14 @@ export default function AdminPortfolio() {
             {form.category === 'web' && (
               <div>
                 <label style={lbl}>Website URL</label>
-                <input value={form.website_url} onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://clientsite.com" style={inp} onFocus={focus} onBlur={blur} />
+                <input value={form.website_url} onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://clientsite.com" style={inp} onFocus={onFocus} onBlur={onBlur} />
               </div>
             )}
 
             {/* Sort order */}
             <div>
               <label style={lbl}>Sort Order <span style={{ fontWeight: 400 }}>(lower = first)</span></label>
-              <input type="number" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))} placeholder="0" style={{ ...inp, width: '50%' }} onFocus={focus} onBlur={blur} />
+              <input type="number" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))} placeholder="0" style={{ ...inp, width: '50%' }} onFocus={onFocus} onBlur={onBlur} />
             </div>
 
             {/* Featured toggle */}
@@ -360,10 +363,9 @@ export default function AdminPortfolio() {
           </form>
         </div>
 
-        {/* ── RIGHT AREA: Project list ── */}
+        {/* ── RIGHT: Project list ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 32, fontWeight: 700, color: 'var(--text)' }}>Portfolio Projects</h2>
@@ -379,7 +381,6 @@ export default function AdminPortfolio() {
             </div>
           </div>
 
-          {/* List */}
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--purple)', animation: 'spin 0.7s linear infinite' }} />
@@ -395,7 +396,6 @@ export default function AdminPortfolio() {
                 <div key={project.id}
                   style={{ background: 'var(--surface)', border: `1px solid ${editingId === project.id ? 'rgba(153,86,159,0.4)' : 'var(--border)'}`, borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, transition: 'border-color 0.2s' }}>
 
-                  {/* Thumbnail */}
                   <div style={{ width: 64, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: 'var(--bg3)' }}>
                     {project.cover_url
                       ? <img src={project.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -403,7 +403,6 @@ export default function AdminPortfolio() {
                     }
                   </div>
 
-                  {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.title}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
@@ -420,7 +419,6 @@ export default function AdminPortfolio() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <button onClick={() => startEdit(project)} title="Edit"
                       style={{ width: 34, height: 34, borderRadius: 10, background: editingId === project.id ? 'rgba(249,165,52,0.1)' : 'var(--bg2)', border: `1px solid ${editingId === project.id ? 'rgba(249,165,52,0.4)' : 'var(--border)'}`, color: editingId === project.id ? 'var(--amber)' : 'var(--text2)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
@@ -428,7 +426,7 @@ export default function AdminPortfolio() {
                       onMouseLeave={e => { if (editingId !== project.id) { e.currentTarget.style.background = 'var(--bg2)'; e.currentTarget.style.color = 'var(--text2)' }}}
                     >✏️</button>
 
-                    <button onClick={() => toggleVisibility(project)} title={project.is_visible ? 'Hide from portfolio' : 'Show on portfolio'}
+                    <button onClick={() => toggleVisibility(project)} title={project.is_visible ? 'Hide' : 'Show'}
                       style={{ width: 34, height: 34, borderRadius: 10, background: project.is_visible ? 'rgba(71,198,235,0.1)' : 'var(--bg2)', border: `1px solid ${project.is_visible ? 'rgba(71,198,235,0.3)' : 'var(--border)'}`, color: project.is_visible ? 'var(--blue)' : 'var(--text3)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
                     >{project.is_visible ? '👁️' : '🙈'}</button>
 
