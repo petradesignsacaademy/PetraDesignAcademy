@@ -16,26 +16,29 @@ export default function CertificatePage() {
   const [completedAt,    setCompletedAt]    = useState(null)
   const [rendered,       setRendered]       = useState(false)
   const [completedCount, setCompletedCount] = useState(0)
+  const [debugInfo,      setDebugInfo]      = useState(null)
 
   const totalCount = ALL_LESSONS.length
 
   useEffect(() => { loadData() }, [user])
 
   async function loadData() {
-    if (!user) return
+    if (!user) { setDebugInfo(`user is null`); return }
     setLoading(true)
     try {
+      const keys = ALL_LESSONS.map(l => l.key)
       const { data: prog, error: progError } = await supabase
         .from('course_progress')
         .select('lesson_key, is_completed, updated_at')
         .eq('student_id', user.id)
-        .in('lesson_key', ALL_LESSONS.map(l => l.key))
+        .in('lesson_key', keys)
 
       if (progError) throw progError
 
       const completedRows = (prog || []).filter(p => p.is_completed)
       const isEligible    = completedRows.length === ALL_LESSONS.length
 
+      setDebugInfo(`rows=${prog?.length ?? 0} completed=${completedRows.length} total=${ALL_LESSONS.length} uid=${user.id?.slice(0,8)}`)
       setCompletedCount(completedRows.length)
       setEligible(isEligible)
       setCourse({ title: COURSE.title })
@@ -307,6 +310,11 @@ export default function CertificatePage() {
             <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text3)', marginBottom:8 }}>
               {completedCount} of {totalCount} lessons complete
             </div>
+            {debugInfo && (
+              <div style={{ fontFamily:'monospace', fontSize:11, color:'var(--text3)', marginBottom:8, background:'var(--bg3)', borderRadius:8, padding:'6px 10px' }}>
+                {debugInfo}
+              </div>
+            )}
             <div style={{ height:6, borderRadius:999, background:'var(--bg3)', overflow:'hidden' }}>
               <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(135deg, #99569F, #ED518E)', borderRadius:999, transition:'width 0.6s ease' }} />
             </div>
