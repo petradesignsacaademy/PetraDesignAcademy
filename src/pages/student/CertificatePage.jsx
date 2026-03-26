@@ -25,11 +25,13 @@ export default function CertificatePage() {
     if (!user) return
     setLoading(true)
     try {
-      const { data: prog } = await supabase
+      const { data: prog, error: progError } = await supabase
         .from('course_progress')
         .select('lesson_key, is_completed, updated_at')
         .eq('student_id', user.id)
         .in('lesson_key', ALL_LESSONS.map(l => l.key))
+
+      if (progError) throw progError
 
       const completedRows = (prog || []).filter(p => p.is_completed)
       const isEligible    = completedRows.length === ALL_LESSONS.length
