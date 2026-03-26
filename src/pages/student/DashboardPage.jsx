@@ -86,6 +86,27 @@ export default function DashboardPage() {
     <StudentLayout>
       <div style={{ maxWidth:1000, margin:'0 auto', padding:'36px 32px' }} className="dashboard-wrap">
 
+        {/* Certificate completion banner */}
+        {overallPct === 100 && (
+          <div style={{ background:'linear-gradient(135deg, #12133C 0%, #2D1060 60%, #12133C 100%)', borderRadius:20, padding:'32px 36px', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'space-between', gap:24, flexWrap:'wrap', border:'1px solid rgba(249,165,52,0.25)' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+              <div style={{ fontSize:44, flexShrink:0 }}>🏆</div>
+              <div>
+                <h2 style={{ fontFamily:'Cormorant Upright, serif', fontSize:32, fontWeight:700, color:'#fff', lineHeight:1.1, marginBottom:6 }}>You did it!</h2>
+                <p style={{ fontFamily:'Poppins, sans-serif', fontSize:14, color:'rgba(255,255,255,0.55)', lineHeight:1.6 }}>
+                  You've completed the full course. Your certificate is ready.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/certificate')}
+              style={{ background:'linear-gradient(135deg, #F9A534, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'14px 32px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}
+            >
+              Download your certificate →
+            </button>
+          </div>
+        )}
+
         {/* Greeting */}
         <div style={{ marginBottom:32 }}>
           <h1 style={{ fontFamily:'Cormorant Upright, serif', fontSize:42, fontWeight:700, color:'var(--text)', lineHeight:1.1, marginBottom:6 }}>

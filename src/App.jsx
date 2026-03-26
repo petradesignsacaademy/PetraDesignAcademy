@@ -58,8 +58,7 @@ export default function App() {
                                        element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
             <Route path="/assignments" element={<ProtectedRoute><AssignmentsPage /></ProtectedRoute>} />
             <Route path="/community"   element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
-            <Route path="/certificate/:courseId"
-                                       element={<ProtectedRoute><CertificatePage /></ProtectedRoute>} />
+            <Route path="/certificate"     element={<ProtectedRoute><CertificatePage /></ProtectedRoute>} />
             <Route path="/account"     element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
 
             {/* ── Admin (Petra only) ──────────────────────────────────────── */}

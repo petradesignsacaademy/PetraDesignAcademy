@@ -245,6 +245,26 @@ export default function CoursePage() {
             )
           })}
         </div>
+
+        {/* Certificate card — shown only when 100% complete */}
+        {overallPct === 100 && (
+          <div style={{ marginTop:32, background:'linear-gradient(135deg, rgba(153,86,159,0.12), rgba(237,81,142,0.08))', border:'1px solid rgba(153,86,159,0.25)', borderRadius:20, padding:40, textAlign:'center' }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>🏆</div>
+            <h2 style={{ fontFamily:'Cormorant Upright, serif', fontSize:36, fontWeight:700, color:'var(--text)', marginBottom:12 }}>
+              Course Complete!
+            </h2>
+            <p style={{ fontFamily:'Poppins, sans-serif', fontSize:14, color:'var(--text2)', lineHeight:1.7, marginBottom:28, maxWidth:460, margin:'0 auto 28px' }}>
+              You've completed all lessons. Claim your Petra Designs certificate.
+            </p>
+            <button
+              onClick={() => navigate('/certificate')}
+              style={{ background:'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'14px 36px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:15, cursor:'pointer' }}
+            >
+              View &amp; Download Certificate
+            </button>
+          </div>
+        )}
+
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </StudentLayout>
