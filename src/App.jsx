@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute, AdminRoute, GuestRoute } from './components/RouteGuards'
@@ -13,6 +13,7 @@ import ResetPasswordPage     from './pages/ResetPasswordPage'
 import AdminLoginPage        from './pages/AdminLoginPage'
 import PaymentSuccessPage    from './pages/PaymentSuccessPage'
 import PortfolioPage          from './pages/PortfolioPage'
+import NotFoundPage           from './pages/NotFoundPage'
 
 // ── Student pages ─────────────────────────────────────────────────────────────
 import DashboardPage  from './pages/student/DashboardPage'
@@ -71,7 +72,7 @@ export default function App() {
             <Route path="/admin/portfolio"     element={<AdminRoute><AdminPortfolio /></AdminRoute>} />
 
             {/* ── Fallback ────────────────────────────────────────────────── */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
 
           </Routes>
         </BrowserRouter>
