@@ -8,17 +8,14 @@
 //   VITE_CLOUDINARY_CLOUD — your Cloudinary cloud name
 //   VITE_CLOUDINARY_PRESET — your Cloudinary unsigned upload preset name
 
-const BIN_ID  = import.meta.env.VITE_JSONBIN_BIN_ID
-const BIN_KEY = import.meta.env.VITE_JSONBIN_KEY
-const CLOUD   = import.meta.env.VITE_CLOUDINARY_CLOUD
-const PRESET  = import.meta.env.VITE_CLOUDINARY_PRESET
+const BIN_ID  = '69c440c8c3097a1dd55d4d7f'
+const CLOUD   = 'dtmco0xc9'
+const PRESET  = 'petra portfolio'
 const JBAPI   = 'https://api.jsonbin.io/v3/b'
 
 // ── Read all projects from JSONBin ────────────────────────────────────────────
 export async function fetchProjects() {
-  const res  = await fetch(`${JBAPI}/${BIN_ID}/latest`, {
-    headers: { 'X-Access-Key': BIN_KEY },
-  })
+  const res  = await fetch(`${JBAPI}/${BIN_ID}/latest`)
   const data = await res.json()
   return data.record?.projects || []
 }
@@ -28,8 +25,7 @@ export async function pushProjects(projects) {
   await fetch(`${JBAPI}/${BIN_ID}`, {
     method:  'PUT',
     headers: {
-      'Content-Type':    'application/json',
-      'X-Access-Key':    BIN_KEY,
+      'Content-Type':     'application/json',
       'X-Bin-Versioning': 'false',
     },
     body: JSON.stringify({ projects }),
