@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading]   = useState(true)
   const [authError, setAuthError] = useState(null)
   const initialSessionHandled   = useRef(false)
+  const currentUserIdRef        = useRef(null)
 
   const fetchProfile = useCallback(async (userId) => {
     try {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }) {
 
   const handleSession = useCallback(async (session) => {
     const currentUser = session?.user ?? null
+    currentUserIdRef.current = currentUser?.id ?? null
     setUser(currentUser)
     if (currentUser) {
       await fetchProfile(currentUser.id)
@@ -99,7 +101,12 @@ export function AuthProvider({ children }) {
           return
         }
 
-        // Genuine new SIGNED_IN (from another tab, magic link, etc.) or USER_UPDATED
+        // SIGNED_IN for the same user = silent token refresh on tab focus — skip loading
+        if (event === 'SIGNED_IN' && session?.user?.id === currentUserIdRef.current) {
+          setUser(session.user)
+          return
+        }
+        // Genuine new SIGNED_IN (different user, magic link, etc.) or USER_UPDATED
         setLoading(true)
         await handleSession(session)
         if (isMounted) setLoading(false)
