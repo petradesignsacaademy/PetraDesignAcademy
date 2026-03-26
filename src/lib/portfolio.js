@@ -1,12 +1,6 @@
 // ── Portfolio data layer ───────────────────────────────────────────────────────
-// Projects are stored as a JSON array in JSONBin.
-// Images are uploaded to Cloudinary via unsigned upload preset.
-//
-// Required env vars (add to .env and Vercel dashboard):
-//   VITE_JSONBIN_BIN_ID   — the bin ID from jsonbin.io
-//   VITE_JSONBIN_KEY      — your JSONBin X-Access-Key (for writes)
-//   VITE_CLOUDINARY_CLOUD — your Cloudinary cloud name
-//   VITE_CLOUDINARY_PRESET — your Cloudinary unsigned upload preset name
+// Projects are stored as a JSON array in JSONBin (public bin — no auth needed).
+// Images and videos are uploaded to Cloudinary via unsigned upload preset.
 
 const BIN_ID  = '69c440c8c3097a1dd55d4d7f'
 const CLOUD   = 'dtmco0xc9'
