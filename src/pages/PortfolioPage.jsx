@@ -61,11 +61,11 @@ export default function PortfolioPage() {
       if (e.key === 'Escape') {
         closeLightbox()
       } else if (e.key === 'ArrowRight') {
-        const imgs = getImages(lightbox.project)
-        if (imgs.length > 1) setLightbox(l => ({ ...l, imageIdx: (l.imageIdx + 1) % imgs.length }))
+        const media = getMedia(lightbox.project)
+        if (media.length > 1) setLightbox(l => ({ ...l, imageIdx: (l.imageIdx + 1) % media.length }))
       } else if (e.key === 'ArrowLeft') {
-        const imgs = getImages(lightbox.project)
-        if (imgs.length > 1) setLightbox(l => ({ ...l, imageIdx: (l.imageIdx - 1 + imgs.length) % imgs.length }))
+        const media = getMedia(lightbox.project)
+        if (media.length > 1) setLightbox(l => ({ ...l, imageIdx: (l.imageIdx - 1 + media.length) % media.length }))
       }
     }
     window.addEventListener('keydown', handler)
@@ -86,8 +86,11 @@ export default function PortfolioPage() {
     }
   }
 
-  function getImages(project) {
+  function getMedia(project) {
     return [project.cover_url, ...(project.images || [])].filter(Boolean)
+  }
+  function isVideo(url) {
+    return /\.(mp4|mov|webm|ogg)$/i.test(url) || url.includes('/video/upload/')
   }
 
   function openLightbox(project) {
@@ -279,8 +282,8 @@ export default function PortfolioPage() {
       {/* ── LIGHTBOX ── */}
       {lightbox && (() => {
         const { project, imageIdx } = lightbox
-        const images = getImages(project)
-        const currentImage = images[imageIdx]
+        const media = getMedia(project)
+        const current = media[imageIdx]
         return (
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(12,13,38,0.95)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'fadeIn 0.2s ease' }}
@@ -291,76 +294,79 @@ export default function PortfolioPage() {
               onClick={e => e.stopPropagation()}
               className="lightbox-inner"
             >
-              {/* Image panel */}
-              <div style={{ flex: '0 0 60%', background: '#07081a', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 400 }} className="lightbox-img-panel">
-                {currentImage ? (
-                  <img src={currentImage} alt={project.title} style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain', display: 'block' }} />
-                ) : (
-                  <div style={{ opacity: 0.2, textAlign: 'center' }}>
-                    <div style={{ fontSize: 48, marginBottom: 8 }}>🖼️</div>
-                    <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: '#fff' }}>No images</p>
-                  </div>
-                )}
+              {/* Media panel */}
+              <div style={{ flex: '0 0 62%', background: '#07081a', display: 'flex', flexDirection: 'column', position: 'relative' }} className="lightbox-img-panel">
+                {/* Main display */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, padding: 12 }}>
+                  {current ? (
+                    isVideo(current)
+                      ? <video key={current} src={current} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8 }} />
+                      : <img key={current} src={current} alt={project.title} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', borderRadius: 4 }} />
+                  ) : (
+                    <div style={{ opacity: 0.2, textAlign: 'center' }}>
+                      <div style={{ fontSize: 48 }}>🖼️</div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Arrows */}
-                {images.length > 1 && (
+                {media.length > 1 && (
                   <>
-                    <button
-                      onClick={() => { const imgs = getImages(lightbox.project); setLightbox(l => ({ ...l, imageIdx: (l.imageIdx - 1 + imgs.length) % imgs.length })) }}
-                      style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', lineHeight: 1 }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg,#99569F,#ED518E)'; e.currentTarget.style.border = 'none' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)' }}
+                    <button onClick={() => setLightbox(l => ({ ...l, imageIdx: (l.imageIdx - 1 + media.length) % media.length }))}
+                      style={{ position: 'absolute', left: 12, top: '45%', transform: 'translateY(-50%)', width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg,#99569F,#ED518E)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                     >‹</button>
-                    <button
-                      onClick={() => { const imgs = getImages(lightbox.project); setLightbox(l => ({ ...l, imageIdx: (l.imageIdx + 1) % imgs.length })) }}
-                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', lineHeight: 1 }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg,#99569F,#ED518E)'; e.currentTarget.style.border = 'none' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)' }}
+                    <button onClick={() => setLightbox(l => ({ ...l, imageIdx: (l.imageIdx + 1) % media.length }))}
+                      style={{ position: 'absolute', right: 12, top: '45%', transform: 'translateY(-50%)', width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg,#99569F,#ED518E)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                     >›</button>
-                    {/* Dots */}
-                    <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
-                      {images.map((_, i) => (
-                        <div key={i} onClick={() => setLightbox(l => ({ ...l, imageIdx: i }))}
-                          style={{ height: 6, width: i === imageIdx ? 20 : 6, borderRadius: 999, background: i === imageIdx ? 'linear-gradient(135deg,#99569F,#ED518E)' : 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'all 0.3s' }}
-                        />
-                      ))}
-                    </div>
                   </>
+                )}
+
+                {/* Thumbnail strip */}
+                {media.length > 1 && (
+                  <div style={{ display: 'flex', gap: 6, padding: '10px 12px', overflowX: 'auto', flexShrink: 0, background: 'rgba(0,0,0,0.3)' }} className="thumb-strip">
+                    {media.map((url, i) => (
+                      <div key={i} onClick={() => setLightbox(l => ({ ...l, imageIdx: i }))}
+                        style={{ flexShrink: 0, width: 52, height: 40, borderRadius: 6, overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === imageIdx ? '#99569F' : 'transparent'}`, opacity: i === imageIdx ? 1 : 0.5, transition: 'all 0.2s' }}>
+                        {isVideo(url)
+                          ? <video src={url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
               {/* Info panel */}
-              <div style={{ flex: '0 0 40%', background: 'var(--bg2)', padding: '40px 36px', display: 'flex', flexDirection: 'column', position: 'relative', overflowY: 'auto' }} className="lightbox-info-panel">
-                {/* Close */}
-                <button
-                  onClick={closeLightbox}
-                  style={{ position: 'absolute', top: 16, right: 16, width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text3)', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--text3)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+              <div style={{ flex: '0 0 38%', background: 'var(--bg2)', padding: '36px 32px', display: 'flex', flexDirection: 'column', position: 'relative', overflowY: 'auto' }} className="lightbox-info-panel">
+                <button onClick={closeLightbox}
+                  style={{ position: 'absolute', top: 14, right: 14, width: 34, height: 34, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#EF4444' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--text3)' }}
                 >✕</button>
 
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: 'var(--purple)', marginBottom: 12 }}>
                     {CAT_LABEL[project.category] || project.category}
                   </div>
-                  <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(28px, 3vw, 42px)', fontWeight: 700, color: 'var(--text)', lineHeight: 1.1, marginBottom: 8 }}>{project.title}</h2>
-                  {project.year && (
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>{project.year}</div>
-                  )}
+                  <h2 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 'clamp(26px, 3vw, 40px)', fontWeight: 700, color: 'var(--text)', lineHeight: 1.1, marginBottom: 8 }}>{project.title}</h2>
+                  {project.year && <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>{project.year}</div>}
                   <div style={{ width: 40, height: 2, background: 'var(--purple)', borderRadius: 999, marginBottom: 20 }} />
                   {project.description && (
                     <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 14, color: 'var(--text2)', lineHeight: 1.85, fontWeight: 300 }}>{project.description}</p>
                   )}
-                  {images.length > 1 && (
-                    <div style={{ marginTop: 20, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>{images.length} images · use arrow keys to navigate</div>
+                  {media.length > 1 && (
+                    <div style={{ marginTop: 16, fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>
+                      {imageIdx + 1} / {media.length} · arrow keys to navigate
+                    </div>
                   )}
                 </div>
 
                 {project.website_url && (
-                  <a
-                    href={project.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <a href={project.website_url} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'block', width: '100%', marginTop: 28, background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', textAlign: 'center', padding: '13px 20px', borderRadius: 999, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, textDecoration: 'none', boxSizing: 'border-box' }}
                   >Visit Website →</a>
                 )}
@@ -377,6 +383,7 @@ export default function PortfolioPage() {
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .portfolio-card:hover .card-overlay { opacity: 1 !important; }
         .filter-bar::-webkit-scrollbar { display: none; }
+        .thumb-strip::-webkit-scrollbar { height: 4px; } .thumb-strip::-webkit-scrollbar-thumb { background: rgba(153,86,159,0.4); border-radius: 4px; }
         @media (max-width: 960px) {
           .portfolio-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .portfolio-grid .portfolio-card { grid-column: span 1 !important; }

@@ -40,15 +40,11 @@ export default function AdminPortfolio() {
   const [editingId,      setEditingId]      = useState(null)
   const [saving,         setSaving]         = useState(false)
   const [deleteConfirm,  setDeleteConfirm]  = useState(null)
-  const [coverFile,      setCoverFile]      = useState(null)
-  const [coverPreview,   setCoverPreview]   = useState(null)
-  const [coverUrl,       setCoverUrl]       = useState('')      // existing URL when editing
-  const [extraFiles,     setExtraFiles]     = useState([])      // new File objects
-  const [existingImages, setExistingImages] = useState([])      // already-uploaded URLs
+  const [mediaFiles,     setMediaFiles]     = useState([])   // new File objects not yet uploaded
+  const [existingMedia,  setExistingMedia]  = useState([])   // already-uploaded URLs (editing)
   const [toasts,         setToasts]         = useState([])
   const [sort,           setSort]           = useState('newest')
-  const coverRef = useRef(null)
-  const extraRef = useRef(null)
+  const mediaRef = useRef(null)
 
   useEffect(() => { load() }, [])
 
@@ -75,15 +71,10 @@ export default function AdminPortfolio() {
     if (!form.title || !form.category) return
     setSaving(true)
     try {
-      // Upload cover if a new file was chosen
-      let finalCoverUrl = coverUrl
-      if (coverFile) finalCoverUrl = await uploadImage(coverFile)
-
-      // Upload any new extra images
-      const allImages = [...existingImages]
-      for (const f of extraFiles) {
-        allImages.push(await uploadImage(f))
-      }
+      // Upload any new media files
+      const newUrls = []
+      for (const f of mediaFiles) newUrls.push(await uploadImage(f))
+      const allMedia = [...existingMedia, ...newUrls]
 
       const proj = {
         id:          editingId || uid(),
@@ -91,8 +82,8 @@ export default function AdminPortfolio() {
         category:    form.category,
         year:        form.year        || null,
         description: form.description || null,
-        cover_url:   finalCoverUrl    || null,
-        images:      allImages,
+        cover_url:   allMedia[0]      || null,
+        images:      allMedia.slice(1),
         website_url: form.website_url || null,
         sort_order:  parseInt(form.sort_order) || 0,
         is_featured: form.is_featured,
@@ -135,22 +126,16 @@ export default function AdminPortfolio() {
       is_featured: project.is_featured || false,
       is_visible:  project.is_visible  !== false,
     })
-    setCoverUrl(project.cover_url || '')
-    setCoverPreview(project.cover_url || null)
-    setCoverFile(null)
-    setExistingImages(project.images || [])
-    setExtraFiles([])
+    setExistingMedia([project.cover_url, ...(project.images || [])].filter(Boolean))
+    setMediaFiles([])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function resetForm() {
     setEditingId(null)
     setForm(EMPTY_FORM)
-    setCoverFile(null)
-    setCoverPreview(null)
-    setCoverUrl('')
-    setExtraFiles([])
-    setExistingImages([])
+    setMediaFiles([])
+    setExistingMedia([])
     setDeleteConfirm(null)
   }
 
@@ -184,7 +169,8 @@ export default function AdminPortfolio() {
     return 0
   })
 
-  const totalExtraImages = existingImages.length + extraFiles.length
+  const totalMedia = existingMedia.length + mediaFiles.length
+  function isVideo(url) { return /\.(mp4|mov|webm|ogg)$/i.test(url) || url.includes('/video/upload/') }
 
   const inp = {
     width: '100%', background: 'var(--surface)', border: '1.5px solid var(--border)',
@@ -233,68 +219,44 @@ export default function AdminPortfolio() {
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the project..." rows={3} style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} onFocus={onFocus} onBlur={onBlur} />
             </div>
 
-            {/* Cover image */}
+            {/* Media — unified image + video picker */}
             <div>
-              <label style={lbl}>Cover Image</label>
-              <div
-                onClick={() => coverRef.current?.click()}
-                style={{ border: `2px dashed ${coverPreview ? 'var(--purple)' : 'var(--border)'}`, borderRadius: 12, padding: 12, textAlign: 'center', cursor: 'pointer', background: coverPreview ? 'rgba(153,86,159,0.04)' : 'transparent', transition: 'border-color 0.2s' }}
-              >
-                {coverPreview ? (
-                  <img src={coverPreview} alt="Cover" style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-                ) : (
-                  <>
-                    <div style={{ fontSize: 22, marginBottom: 4 }}>🖼️</div>
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>Click to upload cover</div>
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', marginTop: 2, opacity: 0.7 }}>Uploads to Cloudinary</div>
-                  </>
-                )}
-                <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                  const f = e.target.files[0]
-                  if (f) { setCoverFile(f); setCoverPreview(URL.createObjectURL(f)) }
-                }} />
-              </div>
-              {coverPreview && (
-                <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); setCoverUrl('') }}
-                  style={{ marginTop: 6, background: 'none', border: 'none', color: '#EF4444', fontFamily: 'Poppins, sans-serif', fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                  Remove cover
-                </button>
-              )}
-            </div>
+              <label style={lbl}>Media — images & videos ({totalMedia}/10) <span style={{ fontWeight: 400, textTransform: 'none' }}>· first = cover</span></label>
 
-            {/* Additional images */}
-            <div>
-              <label style={lbl}>Additional Images ({totalExtraImages}/4)</label>
-              {existingImages.length > 0 && (
+              {totalMedia > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                  {existingImages.map((url, i) => (
-                    <div key={i} style={{ position: 'relative', width: 56, height: 56 }}>
-                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                      <button type="button" onClick={() => setExistingImages(imgs => imgs.filter((_, j) => j !== i))}
+                  {existingMedia.map((url, i) => (
+                    <div key={`ex-${i}`} style={{ position: 'relative', width: 60, height: 60 }}>
+                      {isVideo(url)
+                        ? <video src={url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                        : <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />}
+                      {i === 0 && <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 8, fontWeight: 700, background: 'var(--purple)', color: '#fff', padding: '1px 4px', borderRadius: 3 }}>Cover</span>}
+                      <button type="button" onClick={() => setExistingMedia(m => m.filter((_, j) => j !== i))}
+                        style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>✕</button>
+                    </div>
+                  ))}
+                  {mediaFiles.map((f, i) => (
+                    <div key={`new-${i}`} style={{ position: 'relative', width: 60, height: 60 }}>
+                      {f.type.startsWith('video/')
+                        ? <video src={URL.createObjectURL(f)} muted style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, border: '2px solid var(--purple)' }} />
+                        : <img src={URL.createObjectURL(f)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, border: '2px solid var(--purple)' }} />}
+                      {existingMedia.length === 0 && i === 0 && <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 8, fontWeight: 700, background: 'var(--purple)', color: '#fff', padding: '1px 4px', borderRadius: 3 }}>Cover</span>}
+                      <button type="button" onClick={() => setMediaFiles(mf => mf.filter((_, j) => j !== i))}
                         style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>✕</button>
                     </div>
                   ))}
                 </div>
               )}
-              {extraFiles.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                  {extraFiles.map((f, i) => (
-                    <div key={i} style={{ position: 'relative', width: 56, height: 56 }}>
-                      <img src={URL.createObjectURL(f)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, border: '2px solid var(--purple)' }} />
-                      <button type="button" onClick={() => setExtraFiles(files => files.filter((_, j) => j !== i))}
-                        style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {totalExtraImages < 4 && (
-                <button type="button" onClick={() => extraRef.current?.click()}
-                  style={{ width: '100%', background: 'var(--bg2)', border: '1.5px dashed var(--border)', borderRadius: 10, padding: '10px', fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', cursor: 'pointer' }}>
-                  + Add image
-                  <input ref={extraRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => {
+
+              {totalMedia < 10 && (
+                <button type="button" onClick={() => mediaRef.current?.click()}
+                  style={{ width: '100%', background: 'var(--bg2)', border: `1.5px dashed ${totalMedia === 0 ? 'var(--border)' : 'var(--purple)'}`, borderRadius: 10, padding: '12px', fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', cursor: 'pointer' }}>
+                  {totalMedia === 0 ? '🖼️  Click to add images & videos' : `+ Add more (${10 - totalMedia} remaining)`}
+                  <input ref={mediaRef} type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={e => {
                     const files = Array.from(e.target.files || [])
-                    const remaining = 4 - totalExtraImages
-                    setExtraFiles(ef => [...ef, ...files.slice(0, remaining)])
+                    const remaining = 10 - totalMedia
+                    setMediaFiles(mf => [...mf, ...files.slice(0, remaining)])
+                    e.target.value = ''
                   }} />
                 </button>
               )}

@@ -38,7 +38,7 @@ export async function uploadImage(file) {
   fd.append('file', file)
   fd.append('upload_preset', PRESET)
   fd.append('folder', 'petra-portfolio')
-  const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/upload`, { method: 'POST', body: fd })
+  const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/auto/upload`, { method: 'POST', body: fd })
   const data = await res.json()
   if (data.error) throw new Error(data.error.message)
   return data.secure_url
