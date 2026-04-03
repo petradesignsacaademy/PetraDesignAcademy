@@ -5,10 +5,8 @@ import Navbar from './Navbar'
 const adminNav = [
   { to: '/admin',               icon: '📊', label: 'Overview'       },
   { to: '/admin/students',      icon: '👩‍🎨', label: 'Students'       },
-  { to: '/admin/courses',       icon: '📚', label: 'Course Content'  },
   { to: '/admin/assignments',   icon: '✏️',  label: 'Assignments'    },
   { to: '/admin/announcements', icon: '📣', label: 'Announcements'   },
-  { to: '/admin/revenue',       icon: '💰', label: 'Revenue'         },
   { to: '/admin/portfolio',     icon: '🖼️', label: 'Portfolio'       },
 ]
 
