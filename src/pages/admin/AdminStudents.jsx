@@ -60,8 +60,17 @@ export default function AdminStudents() {
         },
         body: JSON.stringify({ full_name: addForm.full_name.trim(), email: addForm.email.trim() }),
       })
-      const json = await res.json()
-      if (!res.ok) { setAddError(json.error || 'Something went wrong.'); return }
+      let json
+      try { json = await res.json() } catch { json = {} }
+      if (!res.ok) {
+        const msg = json.error || ''
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('exists')) {
+          setAddError('This email is already registered. Try a different email address.')
+        } else {
+          setAddError(msg || `Error ${res.status} — check the Supabase Edge Function logs.`)
+        }
+        return
+      }
       setAddSuccess(true)
       loadStudents()
       setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddForm({ full_name: '', email: '' }) }, 2000)
