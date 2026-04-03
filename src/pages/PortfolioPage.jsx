@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { fetchProjects } from '../lib/portfolio'
 
-const SELAR_URL = 'https://selar.com/2625473152'
 
 const CATEGORIES = [
   { key: 'all',    label: 'All' },
@@ -136,7 +135,7 @@ export default function PortfolioPage() {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <Link to="/login" style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', border: '1.5px solid var(--border)', borderRadius: 999, transition: 'all 0.2s' }}>Sign in</Link>
-          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', background: 'linear-gradient(135deg, #99569F, #ED518E)', borderRadius: 999 }}>Enroll — ₦25,000</a>
+          <Link to="/register" style={{ padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', fontFamily: 'Poppins, sans-serif', background: 'linear-gradient(135deg, #99569F, #ED518E)', borderRadius: 999 }}>Sign Up</Link>
         </div>
 
         <button className="landing-nav-hamburger" onClick={() => setMenuOpen(o => !o)} style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 8, flexDirection: 'column', gap: 5, alignItems: 'center', justifyContent: 'center' }}>
@@ -160,7 +159,7 @@ export default function PortfolioPage() {
               <span>{theme === 'dark' ? '☀️' : '🌙'}</span> {theme === 'dark' ? 'Light mode' : 'Dark mode'}
             </button>
             <Link to="/login" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '13px 16px', borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', border: '1.5px solid var(--border)', fontFamily: 'Poppins, sans-serif' }}>Sign in</Link>
-            <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none', background: 'linear-gradient(135deg, #99569F, #ED518E)', fontFamily: 'Poppins, sans-serif' }}>Enroll Now — ₦25,000 →</a>
+            <Link to="/register" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none', background: 'linear-gradient(135deg, #99569F, #ED518E)', fontFamily: 'Poppins, sans-serif' }}>Sign Up →</Link>
           </div>
         </div>
       )}
@@ -275,7 +274,7 @@ export default function PortfolioPage() {
         <div style={{ display: 'flex', gap: 20 }}>
           <Link to="/portfolio" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Portfolio</Link>
           <Link to="/login" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', textDecoration: 'none' }}>Sign in</Link>
-          <a href={SELAR_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Enroll now</a>
+          <Link to="/register" style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--purple)', fontWeight: 600, textDecoration: 'none' }}>Sign up</Link>
         </div>
       </footer>
 
