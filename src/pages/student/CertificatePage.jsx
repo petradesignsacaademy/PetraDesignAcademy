@@ -16,6 +16,7 @@ export default function CertificatePage() {
   const [completedAt,    setCompletedAt]    = useState(null)
   const [rendered,       setRendered]       = useState(false)
   const [completedCount, setCompletedCount] = useState(0)
+  const [finalDone,      setFinalDone]      = useState(false)
   const [debugInfo,      setDebugInfo]      = useState(null)
 
   const totalCount = ALL_LESSONS.length
@@ -35,15 +36,27 @@ export default function CertificatePage() {
 
       if (progError) throw progError
 
-      const completedRows = (prog || []).filter(p => p.is_completed)
-      const isEligible    = completedRows.length === ALL_LESSONS.length
+      const completedRows   = (prog || []).filter(p => p.is_completed)
+      const allLessonsDone  = completedRows.length === ALL_LESSONS.length
 
-      setDebugInfo(`rows=${prog?.length ?? 0} completed=${completedRows.length} total=${ALL_LESSONS.length} uid=${user.id?.slice(0,8)}`)
+      // Also check if final project was submitted and approved
+      const { data: finalProg } = await supabase
+        .from('course_progress')
+        .select('lesson_key, is_completed')
+        .eq('student_id', user.id)
+        .eq('lesson_key', 'final-project')
+        .maybeSingle()
+
+      const isFinalDone   = finalProg?.is_completed === true
+      const fullyEligible = allLessonsDone && isFinalDone
+
+      setDebugInfo(`rows=${prog?.length ?? 0} completed=${completedRows.length} total=${ALL_LESSONS.length} finalDone=${isFinalDone} uid=${user.id?.slice(0,8)}`)
       setCompletedCount(completedRows.length)
-      setEligible(isEligible)
+      setFinalDone(isFinalDone)
+      setEligible(fullyEligible)
       setCourse({ title: COURSE.title })
 
-      if (isEligible && completedRows.length > 0) {
+      if (fullyEligible) {
         const latest = new Date(Math.max(...completedRows.map(p => new Date(p.updated_at))))
         setCompletedAt(latest)
       }
@@ -295,35 +308,33 @@ export default function CertificatePage() {
 
   // ── Not eligible ──────────────────────────────────────────────────────────
   if (!eligible) {
-    const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+    const pct            = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+    const allLessonsDone = completedCount === totalCount
     return (
       <StudentLayout>
-        <div style={{ maxWidth:520, margin:'100px auto', padding:'0 24px', textAlign:'center' }}>
+        <div style={{ maxWidth:560, margin:'100px auto', padding:'0 24px', textAlign:'center' }}>
           <div style={{ fontSize:64, marginBottom:24 }}>🏆</div>
           <h1 style={{ fontFamily:'Cormorant Upright, serif', fontSize:42, fontWeight:700, color:'var(--text)', marginBottom:12 }}>
-            Almost there!
+            {allLessonsDone ? 'Almost there!' : 'Keep going!'}
           </h1>
-          <p style={{ fontFamily:'Poppins, sans-serif', color:'var(--text3)', fontSize:15, lineHeight:1.8, marginBottom:24 }}>
-            Complete all lessons to unlock your certificate. You're doing great — keep going!
+          <p style={{ fontFamily:'Poppins, sans-serif', color:'var(--text3)', fontSize:15, lineHeight:1.8, marginBottom:16 }}>
+            {allLessonsDone
+              ? "You've completed all lessons. To unlock your certificate, submit your Final Course Project."
+              : `You've completed ${completedCount} of ${totalCount} lessons. Complete all lessons and submit your Final Course Project to earn your certificate.`}
           </p>
-          <div style={{ marginBottom:32 }}>
-            <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text3)', marginBottom:8 }}>
-              {completedCount} of {totalCount} lessons complete
+          {debugInfo && (
+            <div style={{ fontFamily:'monospace', fontSize:11, color:'var(--text3)', marginBottom:12, background:'var(--bg3)', borderRadius:8, padding:'6px 10px', textAlign:'left' }}>
+              {debugInfo}
             </div>
-            {debugInfo && (
-              <div style={{ fontFamily:'monospace', fontSize:11, color:'var(--text3)', marginBottom:8, background:'var(--bg3)', borderRadius:8, padding:'6px 10px' }}>
-                {debugInfo}
-              </div>
-            )}
-            <div style={{ height:6, borderRadius:999, background:'var(--bg3)', overflow:'hidden' }}>
-              <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(135deg, #99569F, #ED518E)', borderRadius:999, transition:'width 0.6s ease' }} />
-            </div>
+          )}
+          <div style={{ background:'var(--bg3)', borderRadius:999, height:6, marginBottom:32, overflow:'hidden' }}>
+            <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(135deg, #99569F, #ED518E)', borderRadius:999, transition:'width 0.6s ease' }} />
           </div>
           <button
             onClick={() => navigate('/courses')}
             style={{ background:'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'14px 36px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:15, cursor:'pointer' }}
           >
-            Back to course →
+            {allLessonsDone ? 'Submit Final Project →' : 'Back to course →'}
           </button>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

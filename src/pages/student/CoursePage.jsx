@@ -21,9 +21,10 @@ function ProgressRing({ percent, color, size = 56 }) {
 export default function CoursePage() {
   const { user }    = useAuth()
   const navigate    = useNavigate()
-  const [progress, setProgress] = useState({})   // key → is_completed
-  const [expanded, setExpanded] = useState(0)    // module index open
-  const [loading, setLoading]   = useState(true)
+  const [progress,    setProgress]    = useState({})   // key → is_completed
+  const [expanded,    setExpanded]    = useState(0)    // module index open
+  const [loading,     setLoading]     = useState(true)
+  const [fpExpanded,  setFpExpanded]  = useState(false)
 
   useEffect(() => { if (user) loadProgress() }, [user])
 
@@ -137,6 +138,23 @@ export default function CoursePage() {
             const modPct       = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0
             const isModDone    = modPct === 100
 
+            // Coming soon — greyed out, non-clickable
+            if (mod.comingSoon) {
+              return (
+                <div key={mIdx} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, overflow:'hidden', opacity:0.5 }}>
+                  <div style={{ padding:'20px 24px', display:'flex', alignItems:'center', gap:16 }}>
+                    <div style={{ width:40, height:40, borderRadius:12, background:`${mod.color}18`, border:`1.5px solid ${mod.color}30`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <span style={{ fontSize:18 }}>{mod.icon}</span>
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <h3 style={{ fontFamily:'Cormorant Upright, serif', fontSize:22, fontWeight:700, color:'var(--text)', margin:0, marginBottom:4 }}>{mod.title}</h3>
+                      <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:700, color:mod.color, background:`${mod.color}15`, padding:'2px 10px', borderRadius:999 }}>COMING SOON</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div key={mIdx} style={{ background:'var(--surface)', border:`1px solid ${isOpen ? mod.color + '40' : 'var(--border)'}`, borderRadius:18, overflow:'hidden', transition:'border-color 0.2s' }}>
 
@@ -207,37 +225,59 @@ export default function CoursePage() {
                         )}
                       </div>
                     ) : (
-                      modLessons.map((lesson, lIdx) => {
-                        const isDone = progress[lesson.key] === true
-                        const isNext = next?.key === lesson.key
-                        return (
-                          <div
-                            key={lesson.key}
-                            onClick={() => goToLesson(lesson)}
-                            style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 24px', borderBottom: lIdx < modLessons.length - 1 ? '1px solid var(--border)' : 'none', cursor:'pointer', background: isNext ? `${mod.color}07` : 'transparent', transition:'background 0.15s' }}
-                            onMouseEnter={e => { if (!isNext) e.currentTarget.style.background='var(--bg2)' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = isNext ? `${mod.color}07` : 'transparent' }}
-                          >
-                            <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background: isDone ? mod.color : isNext ? `${mod.color}15` : 'var(--bg3)', border: isDone ? 'none' : isNext ? `2px solid ${mod.color}` : '2px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              {isDone
-                                ? <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>✓</span>
-                                : isNext
-                                  ? <span style={{ fontSize:10 }}>▶</span>
-                                  : <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:600, color:'var(--text3)' }}>{lIdx + 1}</span>
-                              }
-                            </div>
-                            <div style={{ flex:1, minWidth:0 }}>
-                              <div style={{ fontFamily:'Poppins, sans-serif', fontSize:14, fontWeight: isNext ? 600 : 500, color: isDone ? 'var(--text2)' : 'var(--text)', marginBottom:2 }}>
-                                {lesson.title}
+                      <>
+                        {modLessons.map((lesson, lIdx) => {
+                          const isDone = progress[lesson.key] === true
+                          const isNext = next?.key === lesson.key
+                          return (
+                            <div
+                              key={lesson.key}
+                              onClick={() => goToLesson(lesson)}
+                              style={{ display:'flex', alignItems:'center', gap:16, padding:'14px 24px', borderBottom: lIdx < modLessons.length - 1 ? '1px solid var(--border)' : 'none', cursor:'pointer', background: isNext ? `${mod.color}07` : 'transparent', transition:'background 0.15s' }}
+                              onMouseEnter={e => { if (!isNext) e.currentTarget.style.background='var(--bg2)' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = isNext ? `${mod.color}07` : 'transparent' }}
+                            >
+                              <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background: isDone ? mod.color : isNext ? `${mod.color}15` : 'var(--bg3)', border: isDone ? 'none' : isNext ? `2px solid ${mod.color}` : '2px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                {isDone
+                                  ? <span style={{ color:'#fff', fontSize:12, fontWeight:700 }}>✓</span>
+                                  : isNext
+                                    ? <span style={{ fontSize:10 }}>▶</span>
+                                    : <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, fontWeight:600, color:'var(--text3)' }}>{lIdx + 1}</span>
+                                }
                               </div>
-                              {lesson.hasAssignment && (
-                                <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️ Assignment</span>
-                              )}
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ fontFamily:'Poppins, sans-serif', fontSize:14, fontWeight: isNext ? 600 : 500, color: isDone ? 'var(--text2)' : 'var(--text)', marginBottom:2 }}>
+                                  {lesson.title}
+                                </div>
+                                {lesson.hasAssignment && (
+                                  <span style={{ fontFamily:'Poppins, sans-serif', fontSize:11, color:'var(--text3)' }}>✏️ Assignment</span>
+                                )}
+                              </div>
+                              <span style={{ color: isNext ? mod.color : 'var(--text3)', fontSize:16, flexShrink:0 }}>›</span>
                             </div>
-                            <span style={{ color: isNext ? mod.color : 'var(--text3)', fontSize:16, flexShrink:0 }}>›</span>
+                          )
+                        })}
+
+                        {/* Module-end exercise — unlocked when all lessons in this module are done */}
+                        {mod.moduleEndExercise && modTotal > 0 && modCompleted === modTotal && (
+                          <div style={{ margin:'0 16px 16px', background:'rgba(153,86,159,0.06)', border:'1px solid rgba(153,86,159,0.2)', borderRadius:14, padding:'20px 24px' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                              <span style={{ fontSize:18 }}>✏️</span>
+                              <span style={{ fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:13, color:'var(--purple)' }}>Module Exercise</span>
+                              <span style={{ background:'rgba(153,86,159,0.1)', color:'var(--purple)', fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:999, fontFamily:'Poppins, sans-serif' }}>UNLOCKED</span>
+                            </div>
+                            <p style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text2)', lineHeight:1.8, marginBottom:16 }}>
+                              {mod.moduleEndExercise}
+                            </p>
+                            <button
+                              onClick={() => navigate('/assignments')}
+                              style={{ background:'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'10px 24px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:13, cursor:'pointer' }}
+                            >
+                              Submit Exercise →
+                            </button>
                           </div>
-                        )
-                      })
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -246,21 +286,60 @@ export default function CoursePage() {
           })}
         </div>
 
-        {/* Certificate card — shown only when 100% complete */}
-        {overallPct === 100 && (
-          <div style={{ marginTop:32, background:'linear-gradient(135deg, rgba(153,86,159,0.12), rgba(237,81,142,0.08))', border:'1px solid rgba(153,86,159,0.25)', borderRadius:20, padding:40, textAlign:'center' }}>
-            <div style={{ fontSize:48, marginBottom:16 }}>🏆</div>
+        {/* Final Course Project — shown to all students */}
+        {(() => {
+          const fp = COURSE.finalProject
+          const finalProjectSubmitted = progress['final-project'] === true
+          return (
+            <div style={{ marginTop:32, border:'2px solid rgba(249,165,52,0.35)', borderRadius:20, overflow:'hidden', background:'linear-gradient(135deg, rgba(249,165,52,0.05), rgba(237,81,142,0.03))' }}>
+              <div style={{ padding:'28px 32px' }}>
+                <div style={{ display:'flex', alignItems:'flex-start', gap:16, marginBottom:16 }}>
+                  <span style={{ fontSize:36 }}>🏆</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                      <h3 style={{ fontFamily:'Cormorant Upright, serif', fontSize:28, fontWeight:700, color:'var(--text)', margin:0 }}>{fp.title}</h3>
+                      {finalProjectSubmitted && <span style={{ background:'rgba(34,197,94,0.1)', color:'#22C55E', fontSize:10, fontWeight:700, padding:'2px 10px', borderRadius:999, fontFamily:'Poppins, sans-serif' }}>SUBMITTED</span>}
+                    </div>
+                    <p style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'rgba(249,165,52,0.9)', fontWeight:600, margin:0 }}>
+                      ⚠️ Required for your certificate of completion
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ fontFamily:'Poppins, sans-serif', fontSize:13, color:'var(--text2)', lineHeight:1.8, marginBottom:8, whiteSpace:'pre-line' }}>
+                  {fpExpanded ? fp.brief : fp.brief.split('\n').slice(0, 3).join('\n') + '...'}
+                </div>
+                <button onClick={() => setFpExpanded(e => !e)} style={{ background:'none', border:'none', color:'var(--purple)', fontFamily:'Poppins, sans-serif', fontSize:13, fontWeight:600, cursor:'pointer', padding:0, marginBottom:20 }}>
+                  {fpExpanded ? '↑ Show less' : '↓ Read full brief'}
+                </button>
+
+                <br />
+                <button
+                  onClick={() => navigate('/assignments')}
+                  style={{ background:'linear-gradient(135deg, #F9A534, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'12px 32px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor:'pointer' }}
+                >
+                  {finalProjectSubmitted ? 'View Submission →' : 'Submit Final Project →'}
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Certificate card — only when all lessons AND final project complete */}
+        {overallPct === 100 && progress['final-project'] === true && (
+          <div style={{ marginTop:20, background:'linear-gradient(135deg, rgba(153,86,159,0.12), rgba(237,81,142,0.08))', border:'1px solid rgba(153,86,159,0.25)', borderRadius:20, padding:40, textAlign:'center' }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>🎓</div>
             <h2 style={{ fontFamily:'Cormorant Upright, serif', fontSize:36, fontWeight:700, color:'var(--text)', marginBottom:12 }}>
-              Course Complete!
+              You've earned it!
             </h2>
             <p style={{ fontFamily:'Poppins, sans-serif', fontSize:14, color:'var(--text2)', lineHeight:1.7, marginBottom:28, maxWidth:460, margin:'0 auto 28px' }}>
-              You've completed all lessons. Claim your Petra Designs certificate.
+              All lessons and your final project are complete. Your Petra Designs certificate is ready.
             </p>
             <button
               onClick={() => navigate('/certificate')}
               style={{ background:'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'14px 36px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:15, cursor:'pointer' }}
             >
-              View &amp; Download Certificate
+              View &amp; Download Certificate →
             </button>
           </div>
         )}

@@ -59,13 +59,30 @@ export default function AdminAssignments() {
       reviewed_at:   new Date().toISOString(),
     }).eq('id', selected.id)
 
+    // If this is the final project, mark it complete in course_progress
+    // so the student becomes eligible for their certificate
+    if (selected.lesson_id === 'final-project') {
+      await supabase
+        .from('course_progress')
+        .upsert({
+          student_id:   selected.student_id,
+          lesson_key:   'final-project',
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+          updated_at:   new Date().toISOString(),
+        }, { onConflict: 'student_id,lesson_key' })
+    }
+
     // Notify the student
+    const isFinalProject = selected.lesson_id === 'final-project'
     await supabase.from('notifications').insert({
       user_id: selected.student_id,
       type:    'feedback_posted',
-      title:   'Petra reviewed your assignment!',
-      body:    `Feedback on: ${lesson?.title || selected.lesson_id}`,
-      link:    `/courses`,
+      title:   isFinalProject ? '🎓 Petra reviewed your Final Project!' : 'Petra reviewed your assignment!',
+      body:    isFinalProject
+        ? 'Your Final Course Project has been reviewed. You can now download your certificate!'
+        : `Feedback on: ${lesson?.title || selected.lesson_id}`,
+      link:    isFinalProject ? '/certificate' : '/courses',
     })
 
     setSaving(false)
@@ -107,6 +124,7 @@ export default function AdminAssignments() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {submissions.map(sub => {
             const lesson = getLessonByKey(sub.lesson_id)
+            || (sub.lesson_id === 'final-project' ? { title: 'Final Course Project', moduleIdx: null } : null)
             return (
             <div key={sub.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0 }}>
@@ -118,7 +136,7 @@ export default function AdminAssignments() {
                     {sub.profiles?.full_name} — <span style={{ color: 'var(--purple)' }}>{lesson?.title || sub.lesson_id}</span>
                   </div>
                   <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>
-                    {lesson ? `Module ${lesson.moduleIdx + 1}` : ''} · Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {lesson?.moduleIdx != null ? `Module ${lesson.moduleIdx + 1}` : lesson ? 'Final Project' : ''} · Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                   {sub.written_answer && (
                     <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text2)', marginTop: 6, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8, maxWidth: 500 }}>
@@ -164,7 +182,7 @@ export default function AdminAssignments() {
 
             <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
               <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
-                {selected.profiles?.full_name} — {getLessonByKey(selected.lesson_id)?.title || selected.lesson_id}
+                {selected.profiles?.full_name} — {getLessonByKey(selected.lesson_id)?.title || (selected.lesson_id === 'final-project' ? 'Final Course Project' : selected.lesson_id)}
               </div>
               {selected.written_answer && (
                 <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text2)', marginTop: 6, fontStyle: 'italic' }}>

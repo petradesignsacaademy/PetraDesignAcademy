@@ -87,7 +87,8 @@ export default function AssignmentsPage() {
             {filtered.map(sub => {
               const st     = STATUS[sub.status] || STATUS.pending
               const lesson = getLessonByKey(sub.lesson_id)
-              const mod    = lesson ? COURSE.modules[lesson.moduleIdx] : null
+                || (sub.lesson_id === 'final-project' ? { title: 'Final Course Project', moduleIdx: null } : null)
+              const mod    = lesson?.moduleIdx != null ? COURSE.modules[lesson.moduleIdx] : null
 
               return (
                 <div key={sub.id}

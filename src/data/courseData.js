@@ -1,308 +1,289 @@
-// ── Static course data ────────────────────────────────────────────────────────
-// Videos are hardcoded here so the course works without Supabase content entry.
-// To add a lesson, insert an object into the correct module's lessons array.
-// Lesson keys (m0-l0, m1-l2, etc.) auto-generate from module + lesson index.
-//
-// Module 2 is PDF-only (no videos). Add Google Drive file IDs to the pdfs array:
-//   { title: 'Worksheet name', driveId: 'the_id_from_the_google_drive_url' }
-// Use the /preview URL so students can read but not download.
+// src/data/courseData.js
+// Course structure matches Petra's Notion document exactly.
+// Video IDs and Drive IDs are hardcoded — do not change them.
+// moduleEndExercise = single exercise shown after ALL lessons in that module are done (Modules 0–3)
+// hasAssignment + assignmentBrief = per-lesson exercise shown inside LessonPage (Modules 4–5)
+// comingSoon: true = module shown greyed out with "Coming Soon" badge, not clickable (Modules 7–9)
+// pdfOnly: true = module shows download cards only, no video lessons (Module 6)
 
 export const COURSE = {
   title: 'Professional Brand Identity Masterclass',
   description: 'A complete, structured programme covering everything you need to design, price, and deliver professional brand identity projects for real clients.',
+
+  // Final Course Project — separate from modules, required for certificate
+  finalProject: {
+    title: 'Final Course Project',
+    color: '#F9A534',
+    icon: '🏆',
+    requiredForCertificate: true,
+    brief: `Your final project is to design a complete brand identity from scratch for a real or fictional client of your choosing.
+
+Deliverables:
+1. Creative Brief — documenting your client discovery process
+2. Brand Strategy Document — positioning, values, audience, tone of voice
+3. Moodboard — minimum 2 visual directions presented
+4. Logo Suite — primary logo, secondary version, icon/symbol, colour variations
+5. Brand Presentation Deck — minimum 12 slides presenting your full process and outcome
+6. Brand Guidelines Document — minimum 8 pages covering logo usage, colour system, and typography
+
+This project is reviewed personally by Petra with written feedback. Completion of this project is required to qualify for your certificate of completion.`,
+    submissionInstructions: 'Compile all deliverables into a single well-organised PDF and submit using the form below. Accepted formats: PDF, ZIP. Maximum file size: 50MB.',
+  },
+
   modules: [
 
-    // ── MODULE 1 ──────────────────────────────────────────────────────────────
+    // ── MODULE 0 ─────────────────────────────────────────────────────────────
     {
-      title: 'Course Orientation',
+      title: 'Module 0: Course Orientation',
       color: '#9896B8',
       icon: '◉',
+      moduleEndExercise: "Think of your three favourite brands. Can you identify one element of their brand identity (beyond their logo) that makes them recognisable? For example: Coca-Cola's specific red, the distinct photography of Airbnb, the playful typography of Mailchimp. Write a short paragraph (150–200 words) for each brand explaining what makes their identity work beyond just the logo.",
       lessons: [
         {
-          title: 'What is Brand Identity? (Logo vs Identity vs Branding)',
+          title: 'What is Brand Identity? (Logo vs. Identity vs. Branding)',
           videoId: 'heLzt8pf5S8',
-          description: 'Understand the difference between a logo, a brand identity, and branding — and why it matters before you design anything.',
-          pdf: { title: 'Introduction — Welcome to the World of Brand Identity', driveId: '1pudjLOSXcM_THAqcCHh-P7aTpwQonyVi' },
+          description: 'Understand the critical difference between a logo, a brand identity, and branding itself — and why this distinction shapes every design decision you make.',
+          pdf: { title: 'Course Welcome & Overview', driveId: '1pudjLOSXcM_THAqcCHh-P7aTpwQonyVi' },
         },
       ],
     },
 
-    // ── MODULE 2 ──────────────────────────────────────────────────────────────
+    // ── MODULE 1 ─────────────────────────────────────────────────────────────
     {
-      title: 'Essential Tools Training',
+      title: 'Module 1: Essential Tools Training',
       color: '#47C6EB',
       icon: '⚙',
+      moduleEndExercise: 'Create Your First Mockup. Download a free business card mockup. Use the Smart Object technique in Photoshop to place a simple logo you have created onto the card. Save a high-quality JPEG of the final result and submit it here. This exercise introduces you to the presentation workflow you will use throughout your design career.',
       lessons: [
         {
-          title: 'What Makes a Logo Effective?',
+          title: 'Lesson 1.1: RGB vs. CMYK — The First Decision You Make',
           videoId: 'TAdCeAy2qnE',
-          description: 'Break down the principles behind logos that stand the test of time — simplicity, scalability, distinction, and versatility.',
-          pdf: { title: 'RGB vs. CMYK', driveId: '11usF2pnef7xFzdddUXeYxgiyjZ_lhySd' },
+          description: "Learn the fundamental difference between RGB and CMYK colour modes and why choosing the wrong one can ruin a client's printed materials.",
+          pdf: { title: 'RGB vs. CMYK Guide', driveId: '11usF2pnef7xFzdddUXeYxgiyjZ_lhySd' },
         },
         {
-          title: 'Adobe Illustrator Basics — Your Logo Design Workspace',
+          title: 'Lesson 1.2: Adobe Illustrator Basics — Your Logo Design Workspace',
           videoId: 'pzI3NBFIJfo',
-          description: 'Set up your Illustrator workspace for logo design. Learn the essential tools, shortcuts, and workflow you will use every day.',
+          description: 'Set up your Illustrator workspace for logo design. Master the essential tools, panels, shortcuts, and workflow you will use every day as a professional logo designer.',
         },
         {
-          title: 'Adobe Illustrator Advanced — Crafting with Precision',
+          title: 'Lesson 1.3: Adobe Illustrator Advanced — Crafting with Precision',
           videoId: '85YLY5c4TNo',
-          description: 'Go deeper into Illustrator with advanced techniques for creating precise, professional vector artwork.',
+          description: 'Go deeper into Illustrator — master the Pen tool, Pathfinder operations, grids, and the precision techniques that separate amateur from professional logo work.',
         },
       ],
     },
 
-    // ── MODULE 3 — PDF ONLY ───────────────────────────────────────────────────
-    // Add Google Drive file IDs to the pdfs array below.
-    // Share each file as "Anyone with the link → Viewer" in Google Drive,
-    // then copy the ID from the URL: drive.google.com/file/d/THIS_PART/view
+    // ── MODULE 2 ─────────────────────────────────────────────────────────────
+    // NOT pdfOnly — these are real video lessons that also include PDF resources
     {
-      title: 'Design Resources & Templates',
+      title: 'Module 2: Foundations of Design & Theory',
       color: '#99569F',
-      icon: '📄',
-      pdfOnly: true,
-      description: 'Downloadable worksheets, brand strategy templates, and design reference guides to support your work throughout the course.',
-      lessons: [],
-      pdfs: [
-        { title: 'Brand Strategy Worksheet',  driveId: '1NNg9WiNgCtZwvHB2wsBC6b2bYAU99IIT' },
-        { title: 'Creative Brief Template',   driveId: '1ukGeW6OdAIVPRURNZnhWrjPXQ4IcVDsu' },
-        { title: 'Client Questionnaire',      driveId: '1txyIXtYgXOhSqx3tMRRncONtFsgwkxaB' },
-        { title: 'Design Reference Guide',    driveId: '1fF1j6zG-5BNnlfGjjBt6iuhO2rtMMXZp' },
+      icon: '✦',
+      moduleEndExercise: 'Font Pairing Challenge. You are designing a brand identity for a "Modern Organic Yoga Studio." Using Google Fonts, choose one display/headline font and one body font that work together and reflect the brand\'s personality — organic, calm, modern, and premium. Present your font pair in a simple document or image: show both fonts at different sizes, write a one-sentence explanation of why you chose each font, and explain how they work together. Submit as a PDF or JPEG.',
+      lessons: [
+        {
+          title: 'Lesson 2.1: Principles of Design',
+          videoId: 'kdLSOYv0ajU',
+          description: 'A deep dive into the seven principles that govern great design — Contrast, Hierarchy, Alignment, Balance, Proximity, Repetition, and Space. Learn to see and apply them everywhere.',
+          pdf: { title: 'Design Principles Cheat Sheet', driveId: '1NNg9WiNgCtZwvHB2wsBC6b2bYAU99IIT' },
+        },
+        {
+          title: 'Lesson 2.2: The Psychology of Colour',
+          videoId: 'avtxlD1f8XI',
+          description: 'Colour is not decoration — it is communication. Learn colour theory, the psychology behind every major colour, how to build brand colour systems, and tools like Adobe Color.',
+          pdf: { title: 'Colour Psychology Guide', driveId: '1ukGeW6OdAIVPRURNZnhWrjPXQ4IcVDsu' },
+        },
+        {
+          title: 'Lesson 2.3: Typography That Talks',
+          videoId: 'T7ethYqchCk',
+          description: "Typography is a brand's voice made visible. Learn type anatomy, serif vs. sans-serif, font pairing principles, and how typography reflects a brand's personality and tone.",
+          pdf: { title: 'Typography Glossary & Pairing Guide', driveId: '1txyIXtYgXOhSqx3tMRRncONtFsgwkxaB' },
+        },
+        {
+          title: 'Lesson 2.4: Composition and Layout',
+          videoId: 'LPYZywpZuvw',
+          description: "Master grids, scaling, white space, and visual flow. Learn how professional designers use layout to guide the viewer's eye and create visual order from complexity.",
+          pdf: { title: 'Composition & Layout Reference', driveId: '1fF1j6zG-5BNnlfGjjBt6iuhO2rtMMXZp' },
+        },
       ],
     },
 
-    // ── MODULE 4 ──────────────────────────────────────────────────────────────
+    // ── MODULE 3 ─────────────────────────────────────────────────────────────
     {
-      title: 'Brand Strategy Core',
+      title: 'Module 3: Brand Strategy Core',
       color: '#F9A534',
       icon: '◈',
+      moduleEndExercise: 'SWOT Analysis. Pick a real or fictional local business (for example: "The Neighbourhood Coffee Shop" or "Eco-Friendly Pet Groomer"). Identify 3 main competitors for that business. Complete a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for one of those competitors. Then write a short paragraph explaining what visual gap you identified that your client\'s brand could fill. Submit as a PDF.',
       lessons: [
         {
-          title: 'Client Discovery & The Creative Brief',
-          videoId: 'kdLSOYv0ajU',
-          description: 'Learn how to run a discovery session with a new client, ask the right questions, and translate their answers into a clear creative brief.',
+          title: 'Lesson 3.1: Client Discovery & The Creative Brief',
+          videoId: 'NVRlSti_7GM',
+          description: 'Learn how to run a structured discovery session with a new client — the right questions to ask, how to extract what they really need, and how to translate it into a clear creative brief.',
+          pdf: { title: 'Client Brief Template', driveId: '1o-WQ60IXJfjc9lXcLd-zZERrm8rpP0Az' },
         },
         {
-          title: 'Defining Brand Core',
-          videoId: 'avtxlD1f8XI',
-          description: 'Define the brand\'s mission, vision, values, and personality — the strategic foundation everything else is built on.',
+          title: 'Lesson 3.2: Defining Brand Core',
+          videoId: 'RjOlSGEChoI',
+          description: 'Define the strategic foundation of a brand — its purpose, vision, mission, values, personality, and tone of voice. This is the foundation every visual decision is built on.',
         },
         {
-          title: 'Competitor & Market Analysis',
-          videoId: 'T7ethYqchCk',
-          description: 'Research the competitive landscape to find white space, avoid clichés, and position your client\'s brand with intention.',
+          title: 'Lesson 3.3: Competitor & Market Analysis',
+          videoId: 'dHd2ZsnQYng',
+          description: "Research the competitive landscape to find visual white space, understand category conventions, and position your client's brand with strategic intention — not guesswork.",
         },
       ],
     },
 
-    // ── MODULE 5 ──────────────────────────────────────────────────────────────
+    // ── MODULE 4 ─────────────────────────────────────────────────────────────
+    // Each lesson has its OWN exercise — use hasAssignment + assignmentBrief
     {
-      title: 'Logo Design',
+      title: 'Module 4: The Logo Design Process',
       color: '#ED518E',
       icon: '◆',
       lessons: [
         {
-          title: 'The Ideation Phase — Mind Mapping & Sketching',
-          videoId: 'LPYZywpZuvw',
-          description: 'Go from brief to rough ideas using mind mapping and rapid sketching techniques before touching the computer.',
-        },
-        {
-          title: 'Logo Grid Systems',
-          videoId: 'NVRlSti_7GM',
-          description: 'Use grid systems to create logos with mathematical precision, balance, and proportional harmony.',
-          pdf: { title: 'Precision and Structure — Using Logo Grids & Geometry', driveId: '1o-WQ60IXJfjc9lXcLd-zZERrm8rpP0Az' },
-        },
-        {
-          title: 'Digital Execution in Illustrator (Part A)',
-          videoId: 'RjOlSGEChoI',
-          description: 'Take your sketches into Illustrator and start building clean vector logo marks with professional technique.',
-        },
-        {
-          title: 'Digital Execution in Illustrator (Part B)',
-          videoId: 'dHd2ZsnQYng',
-          description: 'Continue refining your digital logo — typography pairing, colour application, and final vector polish.',
-        },
-        {
-          title: 'Concept Presentation & Client Feedback',
+          title: 'Lesson 4.1: What Makes a Logo Effective?',
           videoId: 'zR1zgojfLnk',
-          description: 'Present your logo concepts professionally, guide client feedback constructively, and handle revision rounds with confidence.',
+          description: 'The 5 universal principles of effective logo design — simplicity, memorability, versatility, relevance, and timelessness. Learn to evaluate any logo through the lens of strategy, not personal taste.',
+          hasAssignment: true,
+          assignmentBrief: 'Logo Deconstruction. Pick one famous logo (not one you designed). Redraw it simply on paper or digitally. Then write a short analysis (200–300 words) evaluating its effectiveness against the five principles: simplicity, memorability, versatility, relevance, and timelessness. What does it do well? What would you change? Submit your sketch and written analysis as a PDF.',
+        },
+        {
+          title: 'Lesson 4.2: The Ideation Phase — Mind Mapping & Sketching',
+          videoId: 'kUUtPnCLKQ8',
+          description: 'Go from brief to concepts without touching the computer. Learn mind mapping techniques and rapid sketching methods that unlock creative thinking and generate more directions in less time.',
+          hasAssignment: true,
+          assignmentBrief: '30 Sketches Challenge. Using this brief: Company: "Rooted Coffee Co." — Core Values: Organic, Community, Growth. Step 1: Create a mind map of words, concepts, and visual ideas connected to this brief (10 minutes). Step 2: Produce at least 30 rough logo sketches — quantity over quality, push past the obvious ideas. Step 3: Circle your 3 strongest concepts and write one sentence explaining the idea behind each. Submit photos of your sketches as a PDF or JPEG.',
+        },
+        {
+          title: 'Lesson 4.3: Precision and Structure — Logo Grids & Geometry',
+          videoId: 'Mthty1AkGUU',
+          description: 'Learn how world-class designers use mathematical grids and geometric construction to create logos with perfect proportional harmony, consistency, and professional precision.',
+          pdf: { title: 'Logo Grids & Geometry Guide', driveId: '1o-WQ60IXJfjc9lXcLd-zZERrm8rpP0Az' },
+          hasAssignment: true,
+          assignmentBrief: 'Grid Deconstruction. Take one of the following geometrically constructed logos: Airbnb, Pinterest, or the original Twitter bird. Overlay a grid on top of it to reverse-engineer the geometric structure used to build it. Show the circles, lines, and shapes that form the underlying construction. Submit as a PDF or image file.',
+        },
+        {
+          title: 'Lesson 4.4: Digital Execution in Adobe Illustrator',
+          videoId: '7-jAGsTq7EQ',
+          description: 'Take your strongest sketch from the ideation phase and execute it as a clean, professional vector logo in Illustrator. From scan to final vector with organised layers, precise paths, and correct file setup.',
+          hasAssignment: true,
+          assignmentBrief: 'From Sketch to Vector. Take your top-rated sketch from Lesson 4.2 and execute it in Adobe Illustrator. Deliverables: (1) A well-organised file with named layers — Sketch, Construction Lines, Final Artwork. (2) The final logo in solid black. (3) One exported PNG with a transparent background. (4) A screenshot showing the logo with its underlying grid construction visible. Submit all as a compiled PDF.',
+        },
+        {
+          title: 'Lesson 4.5: Concept Presentation & Client Feedback',
+          videoId: '5yQyNggQrGY',
+          description: "Learn how to present your logo concepts professionally — how to frame your rationale, guide the client's feedback, handle revision requests constructively, and move the project forward.",
+          hasAssignment: true,
+          assignmentBrief: 'Create a Presentation Mockup. Place your logo from Lesson 4.4 onto a simple mockup — a business card, a tote bag, or a pen. Use Photoshop Smart Objects or a free mockup tool. Present this to a friend or in the course community and ask for specific feedback. Write a short paragraph documenting what feedback you received and how you would respond to it. Submit your mockup image and written response.',
         },
       ],
     },
 
-    // ── MODULE 6 ──────────────────────────────────────────────────────────────
+    // ── MODULE 5 ─────────────────────────────────────────────────────────────
+    // Each lesson has its OWN exercise — use hasAssignment + assignmentBrief
     {
-      title: 'Brand Identity Execution',
+      title: 'Module 5: Building the Full Brand Identity System',
       color: '#22C55E',
       icon: '▣',
       lessons: [
         {
           title: 'The Initial Client Conversation & Qualification',
-          videoId: 'kUUtPnCLKQ8',
-          description: 'How to run your first call with a potential client — qualify the project, set expectations, and decide if it\'s the right fit.',
+          videoId: 'dwUg-eqw5To',
+          description: "How to respond to a first inquiry, run a discovery call, qualify the client and project, and decide if it's the right fit — before investing any time in a proposal.",
+          hasAssignment: true,
+          assignmentBrief: "Write a client inquiry response. A potential client has sent you this message: \"Hi, I run a small bakery and I'm looking for a logo. How much do you charge?\" Write your professional response — acknowledge their inquiry, ask 3–4 qualifying questions (budget, timeline, scope), and end by proposing a brief discovery call. Keep it warm, professional, and concise. Submit as a written document.",
         },
         {
-          title: 'Brand Proposal',
-          videoId: 'Mthty1AkGUU',
-          description: 'Write and present a brand proposal that wins projects — scope, timeline, investment, and how to frame your value.',
+          title: 'Crafting the Proposal & Quote',
+          videoId: 'zh0UjTUQwNE',
+          description: 'Build a winning proposal — what to include, how to structure your pricing, how to write a clear scope of work, and how to present it professionally to secure the project.',
+          hasAssignment: true,
+          assignmentBrief: 'Write a project proposal. Using the bakery client from the previous lesson, write a full project proposal including: project overview and goals, your proposed process and timeline (at least 3 milestones), your investment (create a realistic price for a logo + brand identity package), scope of work with clear deliverables, and one sentence about what happens if the scope changes. Submit as a PDF.',
         },
         {
-          title: 'The Onboarding Process — Contracts & Invoice',
-          videoId: '7-jAGsTq7EQ',
-          description: 'Set up the project correctly from day one — contracts, deposits, invoicing, and protecting yourself legally.',
+          title: 'The Onboarding Process — Contracts & Invoicing',
+          videoId: '2j_HgGjwKOI',
+          description: 'Protect yourself and your work legally. Learn the essential clauses in a design contract, how to set up invoicing, why you must collect a deposit before starting, and how to onboard clients professionally.',
+          hasAssignment: true,
+          assignmentBrief: 'Create an onboarding checklist. Write a step-by-step onboarding checklist you would send to a new client after they sign your contract. It should cover at minimum: what happens after signing, what the client needs to provide (assets, logins, questionnaire), the first milestone and its deadline, and how you will communicate throughout the project. Submit as a document or PDF.',
         },
         {
           title: 'The Deep Dive Client Questionnaire & Strategy Workshop',
-          videoId: '5yQyNggQrGY',
-          description: 'Run a structured strategy workshop with your client to extract everything you need to make strategic design decisions.',
+          videoId: 'hqd8AOOJuwI',
+          description: 'Design a comprehensive discovery questionnaire that goes beyond the basics. Learn how to run a live or async strategy workshop to extract brand purpose, audience personas, competitive landscape, and brand voice.',
           hasAssignment: true,
-          assignmentBrief: 'Complete the deep dive questionnaire with a real or practice client. Submit your filled questionnaire and a one-page summary of what you discovered about the brand.',
+          assignmentBrief: 'Complete a strategy workshop. Using the client brief template from the course resources, conduct a strategy session with a real or fictional client. Fill out the full questionnaire and produce a one-page summary covering: what the brand does and for whom, 3 core brand values, the target audience, 2 direct competitors, and the brand voice in one sentence. Submit your completed questionnaire and summary as a PDF.',
         },
         {
           title: 'The Creative Brief & Project Roadmap',
-          videoId: 'dwUg-eqw5To',
-          description: 'Translate your research into a clear creative brief and project roadmap that keeps the project on track.',
-          hasAssignment: true,
-          assignmentBrief: 'Create a complete creative brief document for a brand project (real or fictitious). Include target audience, brand personality, key messages, and visual direction.',
-        },
-        {
-          title: 'Brand Strategy Document',
-          videoId: 'zh0UjTUQwNE',
-          description: 'Build the full brand strategy document you\'ll present to your client before any design work begins.',
-          hasAssignment: true,
-          assignmentBrief: 'Produce a brand strategy document for your chosen brand. It should cover: brand positioning, core values, audience personas, tone of voice, and competitor differentiation.',
-        },
-        {
-          title: 'Creating a Moodboard (Part 1)',
-          videoId: '2j_HgGjwKOI',
-          description: 'Learn how to build a direction-setting moodboard that aligns your client on the visual tone before design begins.',
-        },
-        {
-          title: 'Creating a Moodboard (Part 2)',
-          videoId: 'hqd8AOOJuwI',
-          description: 'Continue building and refining your moodboard — sourcing references, creating cohesion, and presenting it to the client.',
-          hasAssignment: true,
-          assignmentBrief: 'Create a professional moodboard for your brand project. Present at least two visual directions. Submit as a PDF or image.',
-        },
-        {
-          title: 'The Design Phase — Logo Concepts (Part A)',
           videoId: 'upK1Bk1ojhw',
-          description: 'Begin the design phase — ideating logo concepts from the strategy, sketching, and moving into digital execution.',
+          description: 'Synthesise everything you have gathered into a formal creative brief that aligns you and your client before design begins. Create a project roadmap with milestones that keeps everything on track.',
+          hasAssignment: true,
+          assignmentBrief: 'Write a creative brief. Using the strategy work from the previous lesson, write a full creative brief for your brand project. It must include: project overview, target audience, brand personality (5 adjectives), key messages, visual direction notes, deliverables, timeline, and budget. This should be presentable to a real client. Submit as a PDF.',
         },
         {
-          title: 'The Design Phase — Logo Concepts (Part B)',
+          title: 'Visual Direction — Creating & Presenting Moodboards',
           videoId: 'C4xDZ3xmN4c',
-          description: 'Continue developing logo concepts in Illustrator, exploring different directions and refining the strongest ideas.',
+          description: "Translate your brand strategy into a visual direction before designing a single logo. Learn how to build a moodboard that aligns your client on colour, typography, imagery, and feel — preventing costly redesigns.",
+          hasAssignment: true,
+          assignmentBrief: 'Create a moodboard. For your brand project, create a professional moodboard presenting at least two distinct visual directions. Each direction should include: colour palette inspiration, typography style, imagery/photography references, and texture or pattern references. Use Pinterest, Milanote, or a designed PDF. Write a short explanation of how each direction connects to the brand strategy. Submit as a PDF.',
         },
         {
-          title: 'The Design Phase — Logo Concepts (Part C)',
+          title: 'Creating a Brand Strategy Document',
           videoId: 'eIkIkiB3wTc',
-          description: 'Finalise your logo concepts, prepare presentation mockups, and select the strongest options to show the client.',
+          description: 'Build the full brand strategy document that you will present to your client before any visual design work begins. This document is your strategic contract — it protects your decisions and prevents scope creep.',
+          hasAssignment: true,
+          assignmentBrief: 'Produce a brand strategy document. Create a complete brand strategy document for your chosen brand. It must cover: brand positioning statement, core values (minimum 3), target audience personas (minimum 2), tone of voice with examples, competitor differentiation, and one paragraph explaining the strategic visual direction. Minimum 4 pages. Submit as a PDF.',
         },
         {
-          title: 'The Design Phase — Logo Concepts (Part D)',
+          title: 'The Design Phase — Logo Concepts & Presentation',
           videoId: 'Ct5INwXlhPE',
-          description: 'Complete the full logo suite — primary logo, variations, icon, and responsive versions across all formats.',
+          description: 'Walk through the complete design phase — from strategy to final logo concepts, building your full logo suite, preparing professional presentation mockups, and delivering your work to the client.',
           hasAssignment: true,
-          assignmentBrief: 'Submit your complete logo concept set — primary logo, secondary logo, icon/symbol, and at least one colour variation. Present on mockups.',
-        },
-        {
-          title: 'Brand Presentation (Part 1)',
-          videoId: 'kRXli-f8w2o',
-          description: 'Build a compelling brand presentation deck that sells the design rationale and walks the client through your decisions.',
-        },
-        {
-          title: 'Brand Presentation (Part 2)',
-          videoId: 'pP5QJIwmXCA',
-          description: 'Complete and deliver the presentation — how to present live, handle questions, and lead the client to a clear decision.',
-          hasAssignment: true,
-          assignmentBrief: 'Create your full brand presentation deck (minimum 10 slides). Include strategy recap, moodboard, logo rationale, and mockups. Submit as PDF.',
-        },
-        {
-          title: 'Creating a Brand Guideline Document (Part A)',
-          videoId: 'U14A1C-4zlU',
-          description: 'Design a professional brand guidelines document — logo usage rules, colour palette, and typography system.',
-        },
-        {
-          title: 'Creating a Brand Guideline Document (Part B)',
-          videoId: 'Ztbs7YB6p0U',
-          description: 'Complete the brand guidelines with imagery style, tone of voice, and real-world application examples.',
-          hasAssignment: true,
-          assignmentBrief: 'Produce a complete brand guidelines document. It must include: logo rules, colour system, typography, imagery guidelines, and do/don\'t examples. Minimum 12 pages.',
-        },
-        {
-          title: 'Final Delivery & Offboarding',
-          videoId: 'GcMPsZ0JvnE',
-          description: 'Wrap up the project professionally — file delivery, final invoice, client offboarding, and how to ask for referrals and testimonials.',
+          assignmentBrief: 'Submit your complete logo concept set. Deliver: (1) Primary logo, (2) Secondary/horizontal version, (3) Icon or symbol mark, (4) Minimum one colour variation (reversed on dark). Present all versions on a minimum of 3 professional mockups. Submit as a compiled PDF presentation — this should look like something you would send to a real client.',
         },
       ],
     },
 
-    // ── MODULE 7 ──────────────────────────────────────────────────────────────
+    // ── MODULE 6 — FREEBIES ───────────────────────────────────────────────────
     {
-      title: 'Building Your Design Career',
+      title: 'Module 6: Freebies & Resources',
       color: '#8B5CF6',
-      icon: '✦',
-      lessons: [
-        {
-          title: 'Building a Portfolio',
-          videoId: 'ugKro873jfw',
-          description: 'Build a portfolio that wins clients — what to include, how to present case studies, and where to host your work.',
-        },
-        {
-          title: 'Personal Branding',
-          videoId: 'TF5fS0xKpow',
-          description: 'Define your own brand as a designer: your niche, voice, aesthetic, and positioning in the market.',
-        },
+      icon: '🎁',
+      pdfOnly: true,
+      description: 'Free downloadable resources to support your design journey — templates, guides, worksheets, and reference materials. Download and keep these forever.',
+      lessons: [],
+      pdfs: [
+        { title: 'Brand Strategy Worksheet',    driveId: '1NNg9WiNgCtZwvHB2wsBC6b2bYAU99IIT' },
+        { title: 'Creative Brief Template',     driveId: '1ukGeW6OdAIVPRURNZnhWrjPXQ4IcVDsu' },
+        { title: 'Client Questionnaire',        driveId: '1txyIXtYgXOhSqx3tMRRncONtFsgwkxaB' },
+        { title: 'Design Reference Guide',      driveId: '1fF1j6zG-5BNnlfGjjBt6iuhO2rtMMXZp' },
       ],
     },
 
-    // ── MODULE 8 ──────────────────────────────────────────────────────────────
+    // ── MODULES 7–9 — COMING SOON ─────────────────────────────────────────────
     {
-      title: 'Pricing & Getting Clients',
+      title: 'Module 7: Building Your Design Career',
       color: '#E85D04',
-      icon: '◐',
-      lessons: [
-        {
-          title: 'Pricing Your Work',
-          videoId: 'Yl3mRNtvdxE',
-          description: 'Learn how to price logo and brand identity projects — value-based pricing, packages, and how to stop undercharging.',
-        },
-        {
-          title: 'Finding Your First Client',
-          videoId: '03xfEn3PKA8',
-          description: 'Practical strategies for landing your first paid client — outreach, referrals, platforms, and how to start conversations.',
-        },
-        {
-          title: 'What Next',
-          videoId: 'HzBuUCLsxpg',
-          description: 'Where do you go from here? Next steps for growing your design business, raising your rates, and building long-term success.',
-        },
-      ],
+      icon: '🚀',
+      comingSoon: true,
+      lessons: [],
     },
-
-    // ── MODULE 9 ──────────────────────────────────────────────────────────────
     {
-      title: 'The Designer Mindset',
+      title: 'Module 8: Pricing & Getting Clients',
       color: '#06B6D4',
-      icon: '◎',
-      lessons: [
-        {
-          title: 'Why Creation is Important as a Designer',
-          videoId: 'YS-ENhLyvLs',
-          description: 'Explore the mindset shift from consumer to creator and why building a body of work is essential to a sustainable design career.',
-        },
-        {
-          title: 'Building the Right Mindset',
-          videoId: 'LgG9JDmp2j4',
-          description: 'Develop the professional mindset of a working designer — how to handle feedback, manage creative blocks, and stay consistent.',
-        },
-        {
-          title: 'What Type of Content to Post',
-          videoId: 'NkSrQRVOVVo',
-          description: 'Learn what to share online as a designer, how to attract your ideal clients through content, and what platforms to focus on.',
-        },
-      ],
+      icon: '💼',
+      comingSoon: true,
+      lessons: [],
+    },
+    {
+      title: 'Module 9: The Designer Mindset',
+      color: '#F43F5E',
+      icon: '🧠',
+      comingSoon: true,
+      lessons: [],
     },
 
   ],
@@ -310,8 +291,6 @@ export const COURSE = {
 
 // ── Derived helpers ───────────────────────────────────────────────────────────
 
-// Attach stable string keys to every lesson: m0-l0, m0-l1, m1-l0, etc.
-// pdfOnly modules have no lessons so they are skipped automatically.
 COURSE.modules.forEach((mod, mIdx) => {
   mod.index = mIdx
   mod.lessons.forEach((lesson, lIdx) => {
@@ -321,25 +300,22 @@ COURSE.modules.forEach((mod, mIdx) => {
   })
 })
 
-// Flat list of all video lessons in order (excludes pdfOnly modules)
+// All countable lessons — excludes pdfOnly and comingSoon modules
 export const ALL_LESSONS = COURSE.modules
-  .filter(m => !m.pdfOnly)
+  .filter(m => !m.pdfOnly && !m.comingSoon)
   .flatMap(m => m.lessons)
 
-// Look up a lesson by its key
 export function getLessonByKey(key) {
   return ALL_LESSONS.find(l => l.key === key) || null
 }
 
-// Look up a lesson by module + lesson index
 export function getLesson(mIdx, lIdx) {
   return COURSE.modules[mIdx]?.lessons[lIdx] || null
 }
 
-// Previous / next lesson (across module boundaries, skipping pdfOnly modules)
 export function getAdjacentLessons(mIdx, lIdx) {
-  const flat  = ALL_LESSONS
-  const idx   = flat.findIndex(l => l.moduleIdx === mIdx && l.lessonIdx === lIdx)
+  const flat = ALL_LESSONS
+  const idx  = flat.findIndex(l => l.moduleIdx === mIdx && l.lessonIdx === lIdx)
   return {
     prev: idx > 0               ? flat[idx - 1] : null,
     next: idx < flat.length - 1 ? flat[idx + 1] : null,
