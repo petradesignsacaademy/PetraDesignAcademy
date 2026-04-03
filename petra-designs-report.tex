@@ -1,0 +1,238 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{fontenc}
+\usepackage{inputenc}
+\usepackage{microtype}
+\usepackage{setspace}
+
+% Colors
+\definecolor{brandpurple}{RGB}{153, 86, 159}
+\definecolor{brandpink}{RGB}{237, 81, 142}
+\definecolor{darkgray}{RGB}{60, 60, 70}
+\definecolor{lightgray}{RGB}{245, 245, 248}
+\definecolor{amber}{RGB}{249, 165, 52}
+
+% Section styling
+\titleformat{\section}{\large\bfseries\color{brandpurple}}{}{0em}{}[\color{brandpurple}\rule{\linewidth}{0.4pt}]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\color{darkgray}}{}{0em}{}
+
+% Page header/footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small\color{darkgray} Petra Designs Academy — Development Report}
+\lhead{\small\color{darkgray} Confidential}
+\rfoot{\small\color{darkgray} Page \thepage}
+\lfoot{\small\color{darkgray} Prepared March 2026}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\hypersetup{colorlinks=true, linkcolor=brandpurple, urlcolor=brandpurple}
+
+\begin{document}
+
+% ── Title page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\Huge\bfseries\color{brandpurple} Petra Designs Academy\par}
+  \vspace{0.5cm}
+  {\Large\color{darkgray} Platform Development Report\par}
+  \vspace{0.3cm}
+  {\normalsize\color{darkgray} March 2026\par}
+  \vspace{2cm}
+  \rule{10cm}{0.4pt}\par
+  \vspace{0.5cm}
+  {\normalsize\color{darkgray}
+    This document provides a full summary of the work carried out on the\\
+    Petra Designs Academy platform. It covers every problem that was identified,\\
+    what was done to fix it, and what work remains for the future.
+  \par}
+  \vspace{2cm}
+  \rule{10cm}{0.4pt}\par
+\end{titlepage}
+
+\setstretch{1.5}
+\tableofcontents
+\newpage
+
+% ── 1. Overview ───────────────────────────────────────────────────────────────
+\section{Overview}
+
+The Petra Designs Academy is a private online course platform built specifically for Petra's students. It allows students to apply for access, watch video lessons, submit assignments, receive personal feedback, and communicate with each other through a community feed. Petra manages everything from an admin panel where she can approve students, review assignments, send announcements, and monitor the platform.
+
+The platform was built using React (the user interface), Supabase (the database and login system), and Vercel (the hosting service). Over the past weeks, several technical problems appeared that prevented the platform from working reliably. These problems ranged from login pages getting stuck in an infinite loading loop, to videos not playing, to pages crashing entirely. This report documents every problem that was found, what caused it, how it was fixed, and what still needs attention.
+
+% ── 2. Problems Found and Fixed ───────────────────────────────────────────────
+\section{Problems Found and Fixed}
+
+\subsection{The Admin Login Was Stuck and Showed ``Access Denied''}
+
+The very first problem reported was that the admin login button would spin forever and eventually show an ``Access Denied'' message, even when the correct email and password were entered. This was a serious issue because it completely prevented Petra from accessing her admin panel.
+
+After investigation, the root cause turned out to be a chain of three connected problems inside the database. First, the database had a function called \texttt{is\_admin()} that was supposed to check whether a user was an administrator. However, this function was written in a way that caused it to keep calling itself in an endless loop --- a problem known as infinite recursion. Every time the system tried to check if someone was an admin, it would ask itself the same question over and over until it gave up and returned an error.
+
+Second, because of this broken function, the system could never successfully read any profile from the database. The database security rules (known as Row Level Security policies) were supposed to protect user data, but because they relied on the broken function, they ended up blocking every profile from being read --- including Petra's own admin profile.
+
+Third, Petra's admin account had a status of ``pending'' in the database, which meant the system was treating her as an unapproved student rather than an administrator.
+
+All three problems were fixed together. The broken database policies were removed and replaced with new, clean ones. A new database function called \texttt{get\_my\_profile()} was created using a special ``security definer'' setting, which means it can read profile information directly without being blocked by the security rules. The login system was updated to use this new function. Petra's account status was also corrected to ``approved'' in the database.
+
+\subsection{The Infinite Loading Spinner on Every Page}
+
+A persistent and frustrating problem throughout the project was that pages would sometimes show a spinning loading icon that never went away. Users would sit and wait but the page would never load. The only way to fix it was to manually clear the browser's local storage --- something a regular user should never have to do.
+
+This problem had several different causes that were discovered and fixed one by one.
+
+The first cause was that the app was storing a saved login session (called a token) in the browser's local storage. When this token expired --- for example, after being unused for a long time --- the app would try to use it, find it was no longer valid, and get stuck waiting for a response that never came. Rather than recognising the token was expired and asking the user to log in again, the app would simply hang indefinitely.
+
+The second cause was a coding mistake in the safety timer that was supposed to handle exactly this situation. The app had an eight-second countdown: if everything was still loading after eight seconds, it would step in and clear the stuck session. However, the timer was written in a way that it always thought the page was still loading, even when it had successfully loaded. This is a known technical issue called a ``stale closure'' --- the timer was reading an old snapshot of the loading state instead of the real, current one. Because of this, the timer would fire every single time, eight seconds after the page opened, and redirect users back to the login page even when they were successfully logged in. This was the main cause of users being sent back to the login page after a few seconds.
+
+The third cause was that Supabase (the login system) was occasionally sending a duplicate signal called \texttt{SIGNED\_IN} when a saved session was being restored from storage. The app was treating this as a brand new login event, which caused it to start the entire loading process again while the user was already browsing.
+
+The fourth cause was that every time a user switched away from the browser tab and came back, Supabase would send a signal called \texttt{TOKEN\_REFRESHED} to update the login credentials in the background. The app was responding to this signal by reloading the user's profile, which made the page appear to briefly refresh or flicker.
+
+All four causes were fixed. The safety timer now correctly checks whether the initial loading ever actually completed, rather than reading a stale value. The duplicate \texttt{SIGNED\_IN} signal is now ignored during the startup phase. The \texttt{TOKEN\_REFRESHED} signal is now completely ignored on the app's side, since Supabase handles token renewal internally and the app does not need to do anything in response. The safety timer now also performs a proper forced redirect to the login page (rather than just setting some state and hoping the page reacts correctly) in the rare case where loading truly gets stuck.
+
+\subsection{Videos Were Not Showing}
+
+Students reported that the video lessons were showing a blank area or a broken page icon where the video player should have been. This was a serious issue because watching videos is the core purpose of the course.
+
+The cause was a security setting in the website's configuration file called a Content Security Policy (CSP). This setting controls what external content the website is allowed to load. The policy had been written without including YouTube as an allowed source for embedded video players (called iframes). Because of this restriction, the browser was silently blocking every YouTube video from loading.
+
+The fix was straightforward: the YouTube domain was added to the list of approved frame sources in the configuration file. After this change was deployed, all videos began loading correctly.
+
+\subsection{The Community Page Was Completely Broken}
+
+The Community page --- where students can post messages and reply to each other --- was not working at all. Posts were not loading and new posts could not be submitted.
+
+The cause was that the code was using the wrong column names when reading from and writing to the database. Specifically, the code was looking for a column called \texttt{is\_removed} when the actual column in the database is called \texttt{is\_deleted}. Similarly, when submitting a new post or reply, the code was trying to write to a column called \texttt{author\_id}, but the real column name is \texttt{student\_id}. Because these names did not match, every database query was failing silently.
+
+Both column names were corrected in the code, and the Community page began working as expected.
+
+\subsection{Course Content Was Too Dependent on the Database}
+
+The original design of the platform stored all course content --- including module names, lesson titles, lesson descriptions, video links, and assignment briefs --- inside the Supabase database. This created two significant problems.
+
+First, it made the platform much more complex than necessary. Every time a student opened a lesson, the app had to make multiple database requests just to find out what to show. This created many opportunities for things to go wrong, especially when database security rules were involved.
+
+Second, the course content was tightly linked to other database tables through relationships called foreign keys. When a student submitted an assignment, it was linked to a specific lesson record in the database by a unique identifier (UUID). This meant that changing or restructuring lessons in the database could break student submission records.
+
+The decision was made to move all course content directly into the application code. A new file called \texttt{courseData.js} was created, which contains all 37 video lessons across 6 modules, along with their titles, descriptions, video IDs, and assignment briefs. This file is part of the application itself rather than stored in the database. The benefits of this approach are significant: the course content loads instantly without any database requests, there are no security rules that can block it, and it is far simpler to understand and maintain.
+
+As part of this change, the URL structure for lessons was also simplified. Previously, lesson URLs contained long database identifiers that looked like random strings of letters and numbers (for example, \texttt{/courses/abc123.../lessons/def456...}). These have been replaced with clean, readable URLs based on the module and lesson position (for example, \texttt{/courses/m/0/l/2} for the third lesson in the first module).
+
+Student progress is now tracked using simple text keys in the format \texttt{m0-l0} (meaning module zero, lesson zero) rather than database UUIDs, which is much cleaner and less error-prone.
+
+\subsection{Several Pages Could Get Stuck Loading After an Error}
+
+A review of all pages on the platform revealed that many of them were missing a basic safety pattern. When a page loads data from the database, it sets a loading state to true at the start and to false when done. However, if the database request fails with an error, pages without proper error handling would never set loading back to false, leaving users staring at a spinner permanently.
+
+This problem was found and fixed across the following pages: the Assignments page, the Community page, the Dashboard page, the Lesson page, the admin Students page, the admin Assignments page, and the admin Announcements page. Each page was updated to use a try-catch-finally pattern, which guarantees that the loading state is always turned off regardless of whether the data request succeeded or failed.
+
+\subsection{Admin Pages Were Using Broken Database Queries}
+
+After course content was moved from the database into the application code, two admin pages --- the Overview page and the Assignments review page --- were still trying to look up lesson names and module names by joining to the old database tables. Since the connection between the submissions table and the lessons table had been removed as part of the simplification work, these joins were silently returning empty results.
+
+This meant that in the admin assignment review list, lesson names and module names were appearing blank. Petra would see a submission from a student but would not be able to tell which lesson it belonged to.
+
+Both pages were updated to look up lesson information from the \texttt{courseData.js} file instead of the database, which is the correct approach now that course content lives in the code.
+
+\subsection{The Admin Course Editor Is No Longer Connected to Student Experience}
+
+The admin panel includes a ``Course Content'' section where Petra can add and edit modules, lessons, and video links. This editor was built when course content was stored in the database. Now that course content has been moved into the application code, any changes made through this editor will no longer have any effect on what students see.
+
+A clear warning message has been added to the top of the Course Content page in the admin panel explaining this situation. The message tells Petra that course content is now managed in the code file and that she should contact her developer to update it.
+
+\subsection{The Login Pages Were Unnecessarily Complex}
+
+The student login page originally made an extra database request after a user logged in, to check their role and decide where to send them. This was unnecessary because the rest of the application already handles this automatically through the route guard system. Unused imports and variables were also left in the code from earlier versions.
+
+The login page was simplified to just sign the user in and navigate to the dashboard. The route guards --- which already had the correct logic to redirect students to their dashboard and admins to their admin panel --- handle everything else. Unused code was removed.
+
+Similarly, a review of the route guards confirmed that admins who navigate to student pages (such as the dashboard or course page) are now correctly redirected to the admin panel, rather than being shown the student interface.
+
+% ── 3. What Still Needs to Be Done ───────────────────────────────────────────
+\section{What Still Needs to Be Done}
+
+\subsection{The Password Reset Page Needs to Be Rebuilt}
+
+Currently, the page that users land on when they click the password reset link in their email is a copy of the ``Forgot Password'' page. This means users are shown a form asking for their email address again, instead of a form where they can set a new password. Password reset is therefore completely non-functional for students.
+
+This page needs to be rewritten from scratch. When a user clicks the reset link in their email, they should land on a page with two fields --- one for their new password and one to confirm it --- and a button to save the change. Once they save it, they should be redirected to the login page.
+
+\subsection{Updating Course Content Requires a Developer}
+
+Because course content is now hardcoded in the application, adding new lessons, changing video links, or updating lesson descriptions requires editing a code file and deploying a new version of the website. This is not something Petra can do herself through the admin panel.
+
+There are two ways to address this in the future. The first and simpler option is to keep the current approach but make the process as easy as possible for a developer to update the content file quickly when needed. The second option is to rebuild the admin course editor to write changes back to the code file automatically, which is a more complex piece of work. A conversation with Petra about how frequently she expects to update course content will help decide which approach is best.
+
+\subsection{Payment Integration}
+
+The Revenue section of the admin panel currently shows a placeholder message. No payment system has been integrated yet. When Petra is ready to collect course fees, a payment provider will need to be connected to the platform. The three most suitable options are Stripe (which works well internationally), Paystack (which is built for Nigerian payments and very reliable for local transactions), and Selar (which requires almost no technical setup and can be running within a day). Each has different fees and capabilities, so the right choice depends on where most of Petra's students are based and how she prefers to manage payments.
+
+\subsection{Student Account Page}
+
+There is a link in the student navigation bar to an ``Account'' page. This page should allow students to update their name, change their password, and potentially upload a profile picture. Depending on whether this page currently exists and works correctly, it may need to be built or reviewed.
+
+\subsection{Mobile Responsiveness}
+
+The platform was primarily designed for desktop screens. While some pages have basic mobile support built in, a thorough review of the mobile experience on small screens (particularly the lesson page with its video player and sidebar, and the admin panel) would help ensure that students using phones or tablets have a good experience.
+
+\subsection{Real-Time Notifications}
+
+Currently, notifications (such as when an assignment is reviewed or an announcement is sent) are fetched from the database when the notification bell is clicked. Students do not receive instant alerts. In the future, real-time notifications could be added so that students see a badge update immediately when something new happens, without having to click the bell to check.
+
+% ── 4. Current State of the Platform ─────────────────────────────────────────
+\section{Current State of the Platform}
+
+As of the date of this report, the platform is live at \textbf{petradesigns.org} and the following features are working correctly.
+
+The student registration and approval flow works as expected. New students can submit a request for access, and Petra can approve or decline them from her admin panel. Approved students receive a notification and gain access to the course.
+
+All 37 video lessons across 6 modules are loading and playing correctly. Students can track their progress through the course, and the system remembers which lessons they have completed.
+
+Assignment submission is working. Students can upload a file or write a response on lessons that have assignments, and their submissions appear in Petra's admin assignment review queue.
+
+Petra can write and submit feedback on assignments, including a star rating, and students receive a notification when their work has been reviewed. The feedback appears on the student's Assignments page.
+
+The Community page is working. Students can post messages and reply to each other.
+
+Petra can send announcements to all approved students, and all students receive a notification in their bell icon.
+
+The admin panel correctly shows pending student approvals, the assignment review queue, and platform statistics.
+
+Login, logout, and session management are stable. Users are no longer being sent back to the login page unexpectedly, and switching browser tabs no longer causes the page to refresh.
+
+% ── 5. Technical Summary ──────────────────────────────────────────────────────
+\section{Technical Summary for Reference}
+
+This section provides a brief technical summary for any developer who works on the platform in the future.
+
+The platform uses React with React Router for navigation and Vite as the build tool. It is hosted on Vercel and connects to a Supabase project for authentication, database storage, and file storage.
+
+Course content is stored in \texttt{src/data/courseData.js} and is not read from the database. Student progress is tracked in a Supabase table called \texttt{course\_progress} using lesson keys in the format \texttt{m0-l0}.
+
+The Supabase database contains the following active tables: \texttt{profiles} (one row per user, contains name, email, role, and status), \texttt{submissions} (student assignment submissions, with a text lesson key), \texttt{course\_progress} (tracks which lessons each student has completed), \texttt{community\_posts} and \texttt{community\_replies} (the community feed), \texttt{announcements} (admin broadcast messages), and \texttt{notifications} (per-user notification records).
+
+Profile reading is handled by a Supabase database function called \texttt{get\_my\_profile()} which uses the SECURITY DEFINER setting to bypass row-level security policies safely. The authentication context in the app tries this function first and falls back to a direct table query if the function is unavailable.
+
+The Content Security Policy in \texttt{vercel.json} has been configured to allow YouTube iframes, Google Fonts, and Supabase connections.
+
+% ── Footer ────────────────────────────────────────────────────────────────────
+\vspace{2cm}
+\begin{center}
+\rule{10cm}{0.4pt}\\
+\vspace{0.4cm}
+{\small\color{darkgray}
+This report was prepared for Petra Designs Academy.\\
+All changes described are live on the production platform unless otherwise stated.
+}
+\end{center}
+
+\end{document}
