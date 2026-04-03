@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase'
 import AdminLayout from '../../components/layout/AdminLayout'
 
-const INVITE_URL = 'https://arizznwyilssuihycbjw.supabase.co/functions/v1/invite-student'
 const REMOVE_URL = 'https://arizznwyilssuihycbjw.supabase.co/functions/v1/remove-student'
 
 const STATUS_STYLES = {
@@ -51,29 +51,38 @@ export default function AdminStudents() {
     }
     setAddSaving(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(INVITE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ full_name: addForm.full_name.trim(), email: addForm.email.trim() }),
+      // Use an isolated client so the admin's own session is not touched
+      const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
       })
-      let json
-      try { json = await res.json() } catch { json = {} }
-      if (!res.ok) {
-        const msg = json.error || ''
-        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('exists')) {
-          setAddError('This email is already registered. Try a different email address.')
+
+      const { data, error: signUpError } = await tempClient.auth.signUp({
+        email:    addForm.email.trim(),
+        password: crypto.randomUUID(), // throwaway — student will set their own via Forgot Password
+        options:  { data: { full_name: addForm.full_name.trim() } },
+      })
+
+      if (signUpError) {
+        const msg = signUpError.message.toLowerCase()
+        if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
+          setAddError('This email is already registered.')
         } else {
-          setAddError(msg || `Error ${res.status} — check the Supabase Edge Function logs.`)
+          setAddError(signUpError.message)
         }
         return
       }
+
+      // Approve the student (trigger already created the profile row)
+      if (data?.user) {
+        await supabase.from('profiles').update({
+          full_name: addForm.full_name.trim(),
+          status: 'approved',
+        }).eq('id', data.user.id)
+      }
+
       setAddSuccess(true)
       loadStudents()
-      setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddForm({ full_name: '', email: '' }) }, 2000)
+      setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddForm({ full_name: '', email: '' }) }, 3000)
     } catch (err) {
       setAddError(err.message)
     } finally {
@@ -264,8 +273,11 @@ export default function AdminStudents() {
             {addSuccess ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-                <p style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>Invite sent!</p>
-                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>{addForm.email} will receive an email to set their password.</p>
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>Student added!</p>
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', marginTop: 6, lineHeight: 1.7 }}>
+                  <strong style={{ color: 'var(--text)' }}>{addForm.email}</strong> has been added and approved.<br />
+                  Send them to the login page and tell them to use <strong style={{ color: 'var(--purple)' }}>Forgot Password</strong> to set their password.
+                </p>
               </div>
             ) : (
               <>
@@ -299,7 +311,7 @@ export default function AdminStudents() {
                   </div>
                 )}
                 <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', marginBottom: 20, lineHeight: 1.6 }}>
-                  The student will receive an email with a link to set their password and access the course.
+                  The student is added as approved. Send them to the login page and tell them to click <strong>Forgot Password</strong> to set their own password.
                 </p>
                 <button onClick={inviteStudent} disabled={addSaving}
                   style={{ width: '100%', background: addSaving ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '13px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, cursor: addSaving ? 'not-allowed' : 'pointer' }}>
