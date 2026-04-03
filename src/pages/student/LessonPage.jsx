@@ -33,6 +33,7 @@ export default function LessonPage() {
   useEffect(() => {
     if (user && lesson) {
       setTab('overview')
+      setPdfOpen(!lesson.videoId && !!lesson.pdf)
       loadProgress()
       if (lesson.hasAssignment) loadSubmission()
     }
@@ -165,8 +166,9 @@ export default function LessonPage() {
               </div>
             ) : (
               <div style={{ aspectRatio:'16/9', background:'linear-gradient(135deg, #12133C, #2D1060)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
-                <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>🎬</div>
-                <p style={{ fontFamily:'Poppins, sans-serif', color:'rgba(255,255,255,0.4)', fontSize:14 }}>Video coming soon</p>
+                <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>{lesson.pdf ? '📄' : '🎬'}</div>
+                <p style={{ fontFamily:'Poppins, sans-serif', color:'rgba(255,255,255,0.6)', fontSize:15, fontWeight:600 }}>{lesson.pdf ? 'PDF Lesson' : 'Video coming soon'}</p>
+                {lesson.pdf && <p style={{ fontFamily:'Poppins, sans-serif', color:'rgba(255,255,255,0.35)', fontSize:13 }}>Scroll down to read the resource below</p>}
               </div>
             )}
           </div>
