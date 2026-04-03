@@ -170,12 +170,13 @@ export default function AdminOverview() {
                   <div style={{ minWidth: 0 }}>
                     {(() => {
                       const lesson = getLessonByKey(sub.lesson_id)
+                        || (sub.lesson_id === 'final-project' ? { title: 'Final Course Project', moduleIdx: null } : null)
                       return <>
                         <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {sub.profiles?.full_name} — {lesson?.title || sub.lesson_id}
                         </div>
                         <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>
-                          {lesson ? `Module ${lesson.moduleIdx + 1}` : ''} · {new Date(sub.submitted_at).toLocaleDateString()}
+                          {lesson?.moduleIdx != null ? `Module ${lesson.moduleIdx + 1}` : lesson ? 'Final Project' : ''} · {new Date(sub.submitted_at).toLocaleDateString()}
                         </div>
                       </>
                     })()}

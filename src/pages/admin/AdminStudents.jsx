@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/layout/AdminLayout'
 
+const INVITE_URL = 'https://arizznwyilssuihycbjw.supabase.co/functions/v1/invite-student'
+const REMOVE_URL = 'https://arizznwyilssuihycbjw.supabase.co/functions/v1/remove-student'
+
 const STATUS_STYLES = {
   approved:  { bg: 'rgba(34,197,94,0.1)',   color: '#22C55E', label: 'Active'   },
   pending:   { bg: 'rgba(249,165,52,0.1)',  color: '#F9A534', label: 'Pending'  },
@@ -14,6 +17,13 @@ export default function AdminStudents() {
   const [search, setSearch]     = useState('')
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState(null)   // student detail modal
+  const [showAdd, setShowAdd]   = useState(false)
+  const [addForm, setAddForm]   = useState({ full_name: '', email: '' })
+  const [addError, setAddError] = useState('')
+  const [addSaving, setAddSaving] = useState(false)
+  const [addSuccess, setAddSuccess] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(null) // student object to remove
+  const [removing, setRemoving] = useState(false)
 
   useEffect(() => { loadStudents() }, [])
 
@@ -30,6 +40,56 @@ export default function AdminStudents() {
       console.error('[AdminStudents] loadStudents error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function inviteStudent() {
+    setAddError('')
+    if (!addForm.full_name.trim() || !addForm.email.trim()) {
+      setAddError('Both name and email are required.')
+      return
+    }
+    setAddSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(INVITE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ full_name: addForm.full_name.trim(), email: addForm.email.trim() }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setAddError(json.error || 'Something went wrong.'); return }
+      setAddSuccess(true)
+      loadStudents()
+      setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddForm({ full_name: '', email: '' }) }, 2000)
+    } catch (err) {
+      setAddError(err.message)
+    } finally {
+      setAddSaving(false)
+    }
+  }
+
+  async function removeStudent() {
+    if (!confirmRemove) return
+    setRemoving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(REMOVE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ student_id: confirmRemove.id }),
+      })
+      const json = await res.json()
+      if (!res.ok) { alert(json.error || 'Failed to remove student.'); return }
+      setStudents(prev => prev.filter(s => s.id !== confirmRemove.id))
+      setConfirmRemove(null)
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -67,6 +127,10 @@ export default function AdminStudents() {
           <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 40, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Students</h1>
           <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 14 }}>Manage and monitor all enrolled members</p>
         </div>
+        <button onClick={() => { setShowAdd(true); setAddError(''); setAddSuccess(false); setAddForm({ full_name: '', email: '' }) }}
+          style={{ background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '10px 22px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          + Add Student
+        </button>
       </div>
 
       {/* Auto-approval note */}
@@ -147,12 +211,96 @@ export default function AdminStudents() {
                       Reinstate
                     </button>
                   )}
+                  <button onClick={() => setConfirmRemove(s)} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444', padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
+                    Remove
+                  </button>
                 </div>
               </div>
             )
           })
         )}
       </div>
+      {/* Confirm Remove modal */}
+      {confirmRemove && (
+        <div onClick={() => !removing && setConfirmRemove(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', width: '100%', maxWidth: 420, padding: 32, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+            <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 28, fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>Remove student?</h3>
+            <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', lineHeight: 1.7, marginBottom: 24 }}>
+              This will permanently delete <strong style={{ color: 'var(--text)' }}>{confirmRemove.full_name}</strong> ({confirmRemove.email}) and revoke all their access. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmRemove(null)} disabled={removing}
+                style={{ flex: 1, background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)', borderRadius: 999, padding: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={removeStudent} disabled={removing}
+                style={{ flex: 1, background: removing ? 'var(--bg3)' : '#EF4444', color: '#fff', border: 'none', borderRadius: 999, padding: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, cursor: removing ? 'not-allowed' : 'pointer' }}>
+                {removing ? 'Removing...' : 'Yes, Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Student modal */}
+      {showAdd && (
+        <div onClick={() => setShowAdd(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', width: '100%', maxWidth: 460, padding: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>Add New Student</h3>
+              <button onClick={() => setShowAdd(false)} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text3)', cursor: 'pointer' }}>×</button>
+            </div>
+
+            {addSuccess ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>Invite sent!</p>
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>{addForm.email} will receive an email to set their password.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Full name</label>
+                  <input
+                    value={addForm.full_name}
+                    onChange={e => setAddForm(f => ({ ...f, full_name: e.target.value }))}
+                    placeholder="e.g. Amara Johnson"
+                    style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--text)', fontFamily: 'Poppins, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                    onFocus={e => e.target.style.borderColor = '#99569F'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Email address</label>
+                  <input
+                    type="email"
+                    value={addForm.email}
+                    onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="student@example.com"
+                    style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 12, padding: '11px 14px', fontSize: 14, color: 'var(--text)', fontFamily: 'Poppins, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                    onFocus={e => e.target.style.borderColor = '#99569F'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                    onKeyDown={e => e.key === 'Enter' && inviteStudent()}
+                  />
+                </div>
+                {addError && (
+                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontFamily: 'Poppins, sans-serif', fontSize: 13, color: '#EF4444' }}>
+                    {addError}
+                  </div>
+                )}
+                <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)', marginBottom: 20, lineHeight: 1.6 }}>
+                  The student will receive an email with a link to set their password and access the course.
+                </p>
+                <button onClick={inviteStudent} disabled={addSaving}
+                  style={{ width: '100%', background: addSaving ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '13px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, cursor: addSaving ? 'not-allowed' : 'pointer' }}>
+                  {addSaving ? 'Sending invite...' : 'Send Invite ✓'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }
