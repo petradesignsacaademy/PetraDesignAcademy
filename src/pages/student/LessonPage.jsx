@@ -98,7 +98,7 @@ export default function LessonPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     const trimmedLink = driveLink.trim()
-    if (!answerText && !trimmedLink) return
+    if (!trimmedLink) return
     setSubmitting(true)
 
     const { error } = await supabase
@@ -273,7 +273,7 @@ export default function LessonPage() {
                   <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
                     <div>
                       <label style={{ display:'block', fontFamily:'Poppins, sans-serif', fontWeight:600, fontSize:13, color:'var(--text2)', marginBottom:8 }}>
-                        Google Drive link <span style={{ color:'var(--text3)', fontWeight:400 }}>(optional)</span>
+                        Google Drive link <span style={{ color:'var(--pink)', fontWeight:600 }}>*</span>
                       </label>
                       <input
                         type="url"
@@ -303,8 +303,8 @@ export default function LessonPage() {
                     </div>
                     <button
                       type="submit"
-                      disabled={submitting || (!driveLink.trim() && !answerText)}
-                      style={{ background: submitting || (!driveLink.trim() && !answerText) ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'13px 28px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor: submitting || (!driveLink.trim() && !answerText) ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:8, alignSelf:'flex-start' }}
+                      disabled={submitting || !driveLink.trim()}
+                      style={{ background: submitting || !driveLink.trim() ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'13px 28px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor: submitting || !driveLink.trim() ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:8, alignSelf:'flex-start' }}
                     >
                       {submitting
                         ? <><div style={{ width:14, height:14, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }} />Submitting...</>
