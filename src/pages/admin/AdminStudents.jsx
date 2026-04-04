@@ -24,6 +24,7 @@ export default function AdminStudents() {
   const [addSuccess, setAddSuccess] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(null) // student object to remove
   const [removing, setRemoving] = useState(false)
+  const [issuing, setIssuing] = useState(null)
 
   useEffect(() => { loadStudents() }, [])
 
@@ -108,6 +109,36 @@ export default function AdminStudents() {
       alert(err.message)
     } finally {
       setRemoving(false)
+    }
+  }
+
+  async function issueCertificate(student) {
+    if (!window.confirm(`Issue certificate to ${student.full_name}?`)) return
+    setIssuing(student.id)
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          certificate_issued: true,
+          certificate_issued_at: new Date().toISOString(),
+        })
+        .eq('id', student.id)
+
+      await supabase.from('notifications').insert({
+        user_id: student.id,
+        type: 'approved',
+        title: '🎓 Your certificate is ready!',
+        body: 'Congratulations! Your Petra Designs certificate of completion is ready. Click to view and download it.',
+        link: '/certificate',
+      })
+
+      setStudents(prev =>
+        prev.map(s => s.id === student.id ? { ...s, certificate_issued: true } : s)
+      )
+    } catch (err) {
+      console.error('[IssueCertificate]', err)
+    } finally {
+      setIssuing(null)
     }
   }
 
@@ -227,6 +258,22 @@ export default function AdminStudents() {
                   {s.status === 'suspended' && (
                     <button onClick={() => updateStatus(s.id, 'approved')} style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#22C55E', padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                       Reinstate
+                    </button>
+                  )}
+                  {s.status === 'approved' && (
+                    <button
+                      onClick={() => issueCertificate(s)}
+                      disabled={issuing === s.id || s.certificate_issued}
+                      style={{
+                        background: s.certificate_issued ? 'rgba(34,197,94,0.08)' : 'rgba(249,165,52,0.12)',
+                        color: s.certificate_issued ? '#22C55E' : '#F9A534',
+                        border: `1px solid ${s.certificate_issued ? 'rgba(34,197,94,0.25)' : 'rgba(249,165,52,0.3)'}`,
+                        borderRadius: 8, padding: '5px 10px', fontFamily: 'Poppins, sans-serif',
+                        fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap',
+                        cursor: s.certificate_issued || issuing === s.id ? 'default' : 'pointer',
+                      }}
+                    >
+                      {s.certificate_issued ? '✓ Certificate issued' : issuing === s.id ? 'Issuing...' : '🎓 Issue certificate'}
                     </button>
                   )}
                   <button onClick={() => setConfirmRemove(s)} style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444', padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>

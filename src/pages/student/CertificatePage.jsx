@@ -3,65 +3,37 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import StudentLayout from '../../components/layout/StudentLayout'
-import { COURSE, ALL_LESSONS } from '../../data/courseData'
+import { COURSE } from '../../data/courseData'
 
 export default function CertificatePage() {
   const { user, profile } = useAuth()
   const navigate   = useNavigate()
   const canvasRef  = useRef(null)
 
-  const [course,         setCourse]         = useState(null)
-  const [loading,        setLoading]        = useState(true)
-  const [eligible,       setEligible]       = useState(false)
-  const [completedAt,    setCompletedAt]    = useState(null)
-  const [rendered,       setRendered]       = useState(false)
-  const [completedCount, setCompletedCount] = useState(0)
-  const [finalDone,      setFinalDone]      = useState(false)
-  const [debugInfo,      setDebugInfo]      = useState(null)
+  const course = { title: COURSE.title }
 
-  const totalCount = ALL_LESSONS.length
+  const [loading,     setLoading]     = useState(true)
+  const [eligible,    setEligible]    = useState(false)
+  const [completedAt, setCompletedAt] = useState(null)
+  const [rendered,    setRendered]    = useState(false)
 
-  useEffect(() => { loadData() }, [user])
+  useEffect(() => { if (user) loadData() }, [user])
 
   async function loadData() {
-    if (!user) { setDebugInfo(`user is null`); return }
     setLoading(true)
     try {
-      const keys = ALL_LESSONS.map(l => l.key)
-      const { data: prog, error: progError } = await supabase
-        .from('course_progress')
-        .select('lesson_key, is_completed, updated_at')
-        .eq('student_id', user.id)
-        .in('lesson_key', keys)
-
-      if (progError) throw progError
-
-      const completedRows   = (prog || []).filter(p => p.is_completed)
-      const allLessonsDone  = completedRows.length === ALL_LESSONS.length
-
-      // Also check if final project was submitted and approved
-      const { data: finalProg } = await supabase
-        .from('course_progress')
-        .select('lesson_key, is_completed')
-        .eq('student_id', user.id)
-        .eq('lesson_key', 'final-project')
+      const { data } = await supabase
+        .from('profiles')
+        .select('certificate_issued, certificate_issued_at')
+        .eq('id', user.id)
         .maybeSingle()
 
-      const isFinalDone   = finalProg?.is_completed === true
-      const fullyEligible = allLessonsDone && isFinalDone
-
-      setDebugInfo(`rows=${prog?.length ?? 0} completed=${completedRows.length} total=${ALL_LESSONS.length} finalDone=${isFinalDone} uid=${user.id?.slice(0,8)}`)
-      setCompletedCount(completedRows.length)
-      setFinalDone(isFinalDone)
-      setEligible(fullyEligible)
-      setCourse({ title: COURSE.title })
-
-      if (fullyEligible) {
-        const latest = new Date(Math.max(...completedRows.map(p => new Date(p.updated_at))))
-        setCompletedAt(latest)
+      setEligible(data?.certificate_issued === true)
+      if (data?.certificate_issued_at) {
+        setCompletedAt(new Date(data.certificate_issued_at))
       }
     } catch (err) {
-      console.error('[Certificate] loadData error:', err)
+      console.error('[Certificate]', err)
     } finally {
       setLoading(false)
     }
@@ -308,33 +280,21 @@ export default function CertificatePage() {
 
   // ── Not eligible ──────────────────────────────────────────────────────────
   if (!eligible) {
-    const pct            = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-    const allLessonsDone = completedCount === totalCount
     return (
       <StudentLayout>
-        <div style={{ maxWidth:560, margin:'100px auto', padding:'0 24px', textAlign:'center' }}>
-          <div style={{ fontSize:64, marginBottom:24 }}>🏆</div>
-          <h1 style={{ fontFamily:'Cormorant Upright, serif', fontSize:42, fontWeight:700, color:'var(--text)', marginBottom:12 }}>
-            {allLessonsDone ? 'Almost there!' : 'Keep going!'}
+        <div style={{ maxWidth: 520, margin: '100px auto', padding: '0 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 64, marginBottom: 24 }}>🎓</div>
+          <h1 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 42, fontWeight: 700, color: 'var(--text)', marginBottom: 16 }}>
+            Coming soon
           </h1>
-          <p style={{ fontFamily:'Poppins, sans-serif', color:'var(--text3)', fontSize:15, lineHeight:1.8, marginBottom:16 }}>
-            {allLessonsDone
-              ? "You've completed all lessons. To unlock your certificate, submit your Final Course Project."
-              : `You've completed ${completedCount} of ${totalCount} lessons. Complete all lessons and submit your Final Course Project to earn your certificate.`}
+          <p style={{ fontFamily: 'Poppins, sans-serif', color: 'var(--text3)', fontSize: 15, lineHeight: 1.8, marginBottom: 32 }}>
+            Once Petra reviews your final project and issues your certificate, it will appear here. You'll get a notification when it's ready.
           </p>
-          {debugInfo && (
-            <div style={{ fontFamily:'monospace', fontSize:11, color:'var(--text3)', marginBottom:12, background:'var(--bg3)', borderRadius:8, padding:'6px 10px', textAlign:'left' }}>
-              {debugInfo}
-            </div>
-          )}
-          <div style={{ background:'var(--bg3)', borderRadius:999, height:6, marginBottom:32, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(135deg, #99569F, #ED518E)', borderRadius:999, transition:'width 0.6s ease' }} />
-          </div>
           <button
             onClick={() => navigate('/courses')}
-            style={{ background:'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'14px 36px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:15, cursor:'pointer' }}
+            style={{ background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '14px 36px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
           >
-            {allLessonsDone ? 'Submit Final Project →' : 'Back to course →'}
+            Back to course →
           </button>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
