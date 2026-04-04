@@ -87,17 +87,21 @@ export default function CertificatePage() {
       const panelCX = 224
       ctx.textAlign = 'center'
 
-      // Logo — white version loads against dark bg
+      // Logo — render white by drawing into offscreen canvas first
       if (logoImg) {
         const logoW = 180
         const logoH = (logoImg.height / logoImg.width) * logoW
-        ctx.save()
-        ctx.globalCompositeOperation = 'source-over'
-        ctx.drawImage(logoImg, panelCX - logoW / 2, 130, logoW, logoH)
-        ctx.globalCompositeOperation = 'screen'
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(panelCX - logoW / 2, 130, logoW, logoH + 4)
-        ctx.restore()
+        // Offscreen canvas: draw logo, then fill white using source-in
+        // so only the logo's opaque pixels become white (shape is preserved)
+        const off = document.createElement('canvas')
+        off.width  = logoW
+        off.height = logoH
+        const offCtx = off.getContext('2d')
+        offCtx.drawImage(logoImg, 0, 0, logoW, logoH)
+        offCtx.globalCompositeOperation = 'source-in'
+        offCtx.fillStyle = '#ffffff'
+        offCtx.fillRect(0, 0, logoW, logoH)
+        ctx.drawImage(off, panelCX - logoW / 2, 130)
       } else {
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 28px Georgia, serif'
