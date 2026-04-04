@@ -57,130 +57,157 @@ export default function CertificatePage() {
     logo.src = '/logo.png'
 
     function render(logoImg) {
-      // ── Background ─────────────────────────────────────────────────────────
+
+      // ── BACKGROUND ────────────────────────────────────────────────────────────
       ctx.fillStyle = '#FFFFFF'
       ctx.fillRect(0, 0, W, H)
 
-      // Left panel — soft lavender/blush gradient
+      // ── LEFT PANEL — dark navy ────────────────────────────────────────────────
+      const leftW = 448
       const leftGrad = ctx.createLinearGradient(0, 0, 0, H)
-      leftGrad.addColorStop(0, '#F8F4FF')
-      leftGrad.addColorStop(1, '#FFF0F8')
+      leftGrad.addColorStop(0,   '#12133C')
+      leftGrad.addColorStop(0.6, '#1A0A3D')
+      leftGrad.addColorStop(1,   '#12133C')
       ctx.fillStyle = leftGrad
-      ctx.fillRect(0, 0, 460, H)
+      ctx.fillRect(0, 0, leftW, H)
 
-      // ── Decorative arcs (bottom-left corner of left panel) ────────────────
+      // Decorative arcs — bottom-left of left panel
       ;[
-        { r: 280, color: 'rgba(237,81,142,0.06)', lw: 40 },
-        { r: 200, color: 'rgba(153,86,159,0.04)', lw: 30 },
+        { r: 360, color: 'rgba(237,81,142,0.07)', lw: 48 },
+        { r: 260, color: 'rgba(153,86,159,0.06)', lw: 32 },
       ].forEach(({ r, color, lw }) => {
         ctx.beginPath()
-        ctx.arc(0, H, r, 0, Math.PI * 0.5)
+        ctx.arc(0, H, r, 0, Math.PI * 0.55)
         ctx.strokeStyle = color
         ctx.lineWidth   = lw
         ctx.stroke()
       })
 
-      // ── Vertical divider ──────────────────────────────────────────────────
-      const divGrad = ctx.createLinearGradient(0, 60, 0, 930)
-      divGrad.addColorStop(0,   'rgba(153,86,159,0.3)')
-      divGrad.addColorStop(0.5, 'rgba(237,81,142,0.3)')
-      divGrad.addColorStop(1,   'rgba(71,198,235,0.3)')
-      ctx.strokeStyle = divGrad
-      ctx.lineWidth   = 1
-      ctx.beginPath(); ctx.moveTo(460, 60); ctx.lineTo(460, 930); ctx.stroke()
+      // ── LEFT PANEL CONTENT — all centred at panelCX ──────────────────────────
+      const panelCX = 224
+      ctx.textAlign = 'center'
 
-      // ── LEFT PANEL ────────────────────────────────────────────────────────
-      const panelCX = 230
-
-      // Logo
+      // Logo — white version loads against dark bg
       if (logoImg) {
-        const logoW = 160
+        const logoW = 180
         const logoH = (logoImg.height / logoImg.width) * logoW
-        ctx.drawImage(logoImg, panelCX - logoW / 2, 140, logoW, logoH)
+        ctx.save()
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.drawImage(logoImg, panelCX - logoW / 2, 130, logoW, logoH)
+        ctx.globalCompositeOperation = 'screen'
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(panelCX - logoW / 2, 130, logoW, logoH + 4)
+        ctx.restore()
+      } else {
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 28px Georgia, serif'
+        ctx.fillText('Petra Designs', panelCX, 175)
       }
 
-      // Decorative rule
+      // Gradient rule under logo
       const ruleGrad = ctx.createLinearGradient(panelCX - 30, 0, panelCX + 30, 0)
-      ruleGrad.addColorStop(0, '#99569F'); ruleGrad.addColorStop(1, '#ED518E')
+      ruleGrad.addColorStop(0, '#99569F')
+      ruleGrad.addColorStop(1, '#ED518E')
       ctx.fillStyle = ruleGrad
-      ctx.fillRect(panelCX - 30, 340, 60, 2)
+      ctx.fillRect(panelCX - 30, 310, 60, 2)
 
-      // PETRA DESIGNS ACADEMY
-      ctx.textAlign     = 'center'
-      ctx.fillStyle     = 'rgba(153,86,159,0.7)'
-      ctx.font          = '600 9px Poppins, sans-serif'
-      ctx.letterSpacing = '3px'
-      ctx.fillText('PETRA DESIGNS ACADEMY', panelCX, 390)
+      // Academy name
+      ctx.fillStyle     = 'rgba(255,255,255,0.45)'
+      ctx.font          = '600 11px Poppins, sans-serif'
+      ctx.letterSpacing = '2.5px'
+      ctx.fillText('PETRA DESIGNS ACADEMY', panelCX, 358)
       ctx.letterSpacing = '0px'
 
-      // Website
-      ctx.fillStyle = 'rgba(100,100,120,0.5)'
+      // URL
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'
       ctx.font      = '300 12px Poppins, sans-serif'
-      ctx.fillText('petradesigns.org', panelCX, 430)
+      ctx.fillText('petradesigns.org', panelCX, 386)
 
-      // Date issued
-      const dateStr = completedAt
-        ? completedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-        : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-
-      ctx.fillStyle     = 'rgba(153,86,159,0.6)'
-      ctx.font          = '600 9px Poppins, sans-serif'
+      // Date issued — bottom of left panel
+      ctx.fillStyle     = 'rgba(153,86,159,0.7)'
+      ctx.font          = '600 10px Poppins, sans-serif'
       ctx.letterSpacing = '2px'
       ctx.fillText('DATE ISSUED', panelCX, 870)
       ctx.letterSpacing = '0px'
-      ctx.fillStyle = '#333344'
-      ctx.font      = '500 13px Poppins, sans-serif'
-      ctx.fillText(dateStr, panelCX, 886)
 
-      // ── RIGHT PANEL ───────────────────────────────────────────────────────
-      const cx = 930
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'
+      ctx.font      = '600 13px Poppins, sans-serif'
+      const dateStr = completedAt
+        ? completedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      ctx.fillText(dateStr, panelCX, 892)
 
-      // CERTIFICATE OF COMPLETION
-      ctx.textAlign     = 'center'
-      ctx.fillStyle     = 'rgba(153,86,159,0.6)'
-      ctx.font          = '600 10px Poppins, sans-serif'
+      // ── VERTICAL DIVIDER ─────────────────────────────────────────────────────
+      const divGrad = ctx.createLinearGradient(0, 50, 0, H - 50)
+      divGrad.addColorStop(0,    'transparent')
+      divGrad.addColorStop(0.15, 'rgba(153,86,159,0.25)')
+      divGrad.addColorStop(0.5,  'rgba(237,81,142,0.25)')
+      divGrad.addColorStop(0.85, 'rgba(71,198,235,0.25)')
+      divGrad.addColorStop(1,    'transparent')
+      ctx.strokeStyle = divGrad
+      ctx.lineWidth   = 1
+      ctx.beginPath()
+      ctx.moveTo(leftW + 1, 50)
+      ctx.lineTo(leftW + 1, H - 50)
+      ctx.stroke()
+
+      // ── RIGHT PANEL ──────────────────────────────────────────────────────────
+      const rightStart = leftW + 2
+      const rightW     = W - rightStart
+      const cx         = rightStart + rightW / 2
+
+      ctx.textAlign = 'center'
+
+      // CERTIFICATE OF COMPLETION label
+      ctx.fillStyle     = 'rgba(153,86,159,0.65)'
+      ctx.font          = '600 12px Poppins, sans-serif'
       ctx.letterSpacing = '4px'
-      ctx.fillText('CERTIFICATE OF COMPLETION', cx, 130)
+      ctx.fillText('CERTIFICATE OF COMPLETION', cx, 148)
       ctx.letterSpacing = '0px'
 
-      // Gradient bar
-      const barGrad = ctx.createLinearGradient(cx - 24, 0, cx + 24, 0)
-      barGrad.addColorStop(0, '#99569F'); barGrad.addColorStop(1, '#ED518E')
+      // Short gradient bar under label
+      const barGrad = ctx.createLinearGradient(cx - 28, 0, cx + 28, 0)
+      barGrad.addColorStop(0, '#99569F')
+      barGrad.addColorStop(1, '#ED518E')
       ctx.fillStyle = barGrad
-      ctx.fillRect(cx - 24, 170, 48, 2)
+      ctx.fillRect(cx - 28, 170, 56, 1.5)
 
-      // This is to certify that
-      ctx.fillStyle = 'rgba(60,60,80,0.55)'
-      ctx.font      = '300 15px Poppins, sans-serif'
+      // "This is to certify that"
+      ctx.fillStyle = 'rgba(60,60,80,0.5)'
+      ctx.font      = 'italic 16px Poppins, sans-serif'
       ctx.fillText('This is to certify that', cx, 260)
 
-      // Student name — reduce size if too wide
-      const name = profile.full_name || 'Student'
-      ctx.font = '700 72px Cormorant Upright, Georgia, serif'
-      const nameFontSize = ctx.measureText(name).width > 700 ? 58 : 72
-      ctx.font      = `700 ${nameFontSize}px Cormorant Upright, Georgia, serif`
+      // Student name
+      const name = profile?.full_name || 'Student'
+      let nameFontSize = 72
+      ctx.font = `700 72px Cormorant Upright, Georgia, serif`
+      if (ctx.measureText(name).width > 680) {
+        nameFontSize = 56
+        ctx.font = `700 56px Cormorant Upright, Georgia, serif`
+      }
       ctx.fillStyle = '#12133C'
-      ctx.fillText(name, cx, 360)
+      ctx.fillText(name, cx, 362)
 
-      // Name underline
+      // Name underline — gradient, width matches name
+      ctx.font = `700 ${nameFontSize}px Cormorant Upright, Georgia, serif`
       const nameW    = ctx.measureText(name).width
       const nameGrad = ctx.createLinearGradient(cx - nameW / 2, 0, cx + nameW / 2, 0)
-      nameGrad.addColorStop(0, '#99569F')
+      nameGrad.addColorStop(0,   '#99569F')
       nameGrad.addColorStop(0.5, '#ED518E')
-      nameGrad.addColorStop(1, '#47C6EB')
+      nameGrad.addColorStop(1,   '#47C6EB')
       ctx.strokeStyle = nameGrad
       ctx.lineWidth   = 2.5
       ctx.beginPath()
-      ctx.moveTo(cx - nameW / 2, 364)
-      ctx.lineTo(cx + nameW / 2, 364)
+      ctx.moveTo(cx - nameW / 2, 370)
+      ctx.lineTo(cx + nameW / 2, 370)
       ctx.stroke()
 
-      // has successfully completed the course
-      ctx.fillStyle = 'rgba(60,60,80,0.55)'
+      // "has successfully completed the course"
+      ctx.fillStyle = 'rgba(60,60,80,0.45)'
       ctx.font      = '300 15px Poppins, sans-serif'
-      ctx.fillText('has successfully completed the course', cx, 430)
+      ctx.fillText('has successfully completed the course', cx, 432)
 
-      // Course title — word-wrapped, max 2 lines
+      // Course title — italic serif, centred, word-wrapped
       ctx.fillStyle = '#12133C'
       ctx.font      = 'italic 32px Cormorant Upright, Georgia, serif'
       const titleWords = (COURSE.title || '').split(' ')
@@ -188,7 +215,7 @@ export default function CertificatePage() {
       let titleLine    = ''
       for (const word of titleWords) {
         const test = titleLine ? `${titleLine} ${word}` : word
-        if (ctx.measureText(test).width > 700 && titleLine) {
+        if (ctx.measureText(test).width > 680 && titleLine) {
           titleLines.push(titleLine)
           titleLine = word
         } else {
@@ -196,52 +223,56 @@ export default function CertificatePage() {
         }
       }
       if (titleLine) titleLines.push(titleLine)
-      titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, cx, 530 + i * 42))
-      const titleBottom = 530 + Math.min(titleLines.length, 2) * 42
+      const titleStartY = 518
+      titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, cx, titleStartY + i * 44))
+      const titleBottom = titleStartY + Math.min(titleLines.length, 2) * 44
 
-      // Diamond row
-      ctx.fillStyle = 'rgba(153,86,159,0.25)'
-      ;[-20, 0, 20].forEach(offset => {
+      // Three diamonds — centred
+      const diamondY = titleBottom + 44
+      ;[-18, 0, 18].forEach((offset, i) => {
         ctx.save()
-        ctx.translate(cx + offset, titleBottom + 48)
+        ctx.translate(cx + offset, diamondY)
         ctx.rotate(Math.PI / 4)
-        ctx.fillRect(-4, -4, 8, 8)
+        const size = i === 1 ? 7 : 5.5
+        ctx.fillStyle = i === 1 ? 'rgba(237,81,142,0.28)' : 'rgba(153,86,159,0.22)'
+        ctx.fillRect(-size / 2, -size / 2, size, size)
         ctx.restore()
       })
 
-      // ── AUTHORISED BY ─────────────────────────────────────────────────────
-      const authX = 1300, authY = 870
-      ctx.textAlign     = 'right'
-      ctx.fillStyle     = 'rgba(153,86,159,0.6)'
-      ctx.font          = '600 9px Poppins, sans-serif'
+      // ── SIGNATURE — centred ───────────────────────────────────────────────────
+      const sigY = diamondY + 52
+
+      ctx.fillStyle     = 'rgba(153,86,159,0.55)'
+      ctx.font          = '600 10px Poppins, sans-serif'
       ctx.letterSpacing = '2px'
-      ctx.fillText('AUTHORISED BY', authX, authY)
+      ctx.fillText('AUTHORISED BY', cx, sigY)
       ctx.letterSpacing = '0px'
 
       ctx.fillStyle = '#12133C'
-      ctx.font      = 'italic 28px Cormorant Upright, Georgia, serif'
-      ctx.fillText('Petra', authX, authY + 20)
+      ctx.font      = 'italic 30px Cormorant Upright, Georgia, serif'
+      ctx.fillText('Petra', cx, sigY + 34)
 
-      ctx.strokeStyle = 'rgba(153,86,159,0.35)'
+      ctx.strokeStyle = 'rgba(153,86,159,0.3)'
       ctx.lineWidth   = 1
       ctx.beginPath()
-      ctx.moveTo(authX - 80, authY + 44)
-      ctx.lineTo(authX, authY + 44)
+      ctx.moveTo(cx - 50, sigY + 48)
+      ctx.lineTo(cx + 50, sigY + 48)
       ctx.stroke()
 
-      ctx.fillStyle = 'rgba(100,100,120,0.6)'
-      ctx.font      = '400 11px Poppins, sans-serif'
-      ctx.fillText('Founder, Petra Designs Academy', authX, authY + 58)
+      ctx.fillStyle = 'rgba(100,100,120,0.5)'
+      ctx.font      = '400 12px Poppins, sans-serif'
+      ctx.fillText('Founder, Petra Designs Academy', cx, sigY + 64)
 
-      // ── Outer border ──────────────────────────────────────────────────────
-      ctx.strokeStyle = 'rgba(153,86,159,0.18)'
+      // ── OUTER BORDER ──────────────────────────────────────────────────────────
+      ctx.strokeStyle = 'rgba(153,86,159,0.15)'
       ctx.lineWidth   = 1
-      ctx.strokeRect(24, 24, W - 48, H - 48)
+      ctx.strokeRect(18, 18, W - 36, H - 36)
 
-      // ── Corner accents (L-shapes) ─────────────────────────────────────────
+      // ── CORNER ACCENTS ────────────────────────────────────────────────────────
       ctx.strokeStyle = '#99569F'
       ctx.lineWidth   = 2
-      const cs = 20, ci = 24
+      ctx.globalAlpha = 0.6
+      const cs = 18, ci = 18
       ;[
         [ci,     ci,     1,  1 ],
         [W - ci, ci,    -1,  1 ],
@@ -254,6 +285,7 @@ export default function CertificatePage() {
         ctx.lineTo(x, y + dy * cs)
         ctx.stroke()
       })
+      ctx.globalAlpha = 1
 
       setRendered(true)
     }
