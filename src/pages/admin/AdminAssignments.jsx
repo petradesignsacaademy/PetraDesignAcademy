@@ -157,7 +157,13 @@ export default function AdminAssignments() {
                   )}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                {sub.file_url && (
+                  <a href={sub.file_url} target="_blank" rel="noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(71,198,235,0.1)', border: '1px solid rgba(71,198,235,0.2)', color: 'var(--blue)', padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>
+                    🔗 Drive
+                  </a>
+                )}
                 {filter === 'submitted' ? (
                   <button onClick={() => openReview(sub)} style={{ background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 10, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                     Give Feedback
