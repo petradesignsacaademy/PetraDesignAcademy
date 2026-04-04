@@ -129,14 +129,22 @@ export default function AssignmentsPage() {
                       Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}
                       {sub.reviewed_at && ` · Reviewed ${new Date(sub.reviewed_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}`}
                     </span>
-                    {lesson && (
-                      <button
-                        onClick={() => navigate(`/courses/m/${lesson.moduleIdx}/l/${lesson.lessonIdx}`)}
-                        style={{ background:'none', border:'1px solid var(--border)', borderRadius:999, padding:'6px 16px', fontFamily:'Poppins, sans-serif', fontSize:12, fontWeight:600, color:'var(--text2)', cursor:'pointer' }}
-                      >
-                        View Lesson →
-                      </button>
-                    )}
+                    <div style={{ display:'flex', gap:8 }}>
+                      {sub.file_url && (
+                        <a href={sub.file_url} target="_blank" rel="noreferrer"
+                          style={{ background:'rgba(71,198,235,0.08)', border:'1px solid rgba(71,198,235,0.2)', borderRadius:999, padding:'6px 16px', fontFamily:'Poppins, sans-serif', fontSize:12, fontWeight:600, color:'var(--blue)', textDecoration:'none' }}>
+                          🔗 View on Google Drive
+                        </a>
+                      )}
+                      {lesson && (
+                        <button
+                          onClick={() => navigate(`/courses/m/${lesson.moduleIdx}/l/${lesson.lessonIdx}`)}
+                          style={{ background:'none', border:'1px solid var(--border)', borderRadius:999, padding:'6px 16px', fontFamily:'Poppins, sans-serif', fontSize:12, fontWeight:600, color:'var(--text2)', cursor:'pointer' }}
+                        >
+                          View Lesson →
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

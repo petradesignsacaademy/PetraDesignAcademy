@@ -146,7 +146,7 @@ export default function AdminAssignments() {
                     )}
                     {sub.file_url && (
                       <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', background: 'var(--bg2)', borderRadius: 6, padding: '3px 10px' }}>
-                        {['jpg','jpeg','png','gif','webp'].includes(sub.file_name?.split('.').pop()?.toLowerCase()) ? '🖼 Image' : sub.file_name?.endsWith('.pdf') ? '📄 PDF' : '📦 File'}{sub.file_name ? ` · ${sub.file_name}` : ''}
+                        🔗 Google Drive
                       </span>
                     )}
                   </div>
@@ -177,11 +177,7 @@ export default function AdminAssignments() {
       {selected && (() => {
         const lesson = getLessonByKey(selected.lesson_id)
           || (selected.lesson_id === 'final-project' ? { title: 'Final Course Project', moduleIdx: null } : null)
-        const fileUrl  = selected.file_url
-        const fileName = selected.file_name || ''
-        const ext      = fileName.split('.').pop().toLowerCase()
-        const isImage  = ['jpg','jpeg','png','gif','webp','svg'].includes(ext)
-        const isPdf    = ext === 'pdf'
+        const fileUrl = selected.file_url
 
         return (
           <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
@@ -210,26 +206,13 @@ export default function AdminAssignments() {
                 </div>
               )}
 
-              {/* Submitted file */}
+              {/* Google Drive link */}
               {fileUrl && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 8 }}>SUBMITTED FILE</div>
-
-                  {isImage && (
-                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 8, background: 'var(--bg2)' }}>
-                      <img src={fileUrl} alt={fileName} style={{ width: '100%', maxHeight: 360, objectFit: 'contain', display: 'block' }} />
-                    </div>
-                  )}
-
-                  {isPdf && (
-                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 8, height: 320 }}>
-                      <iframe src={fileUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
-                    </div>
-                  )}
-
-                  <a href={fileUrl} target="_blank" rel="noreferrer" download={fileName}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(71,198,235,0.1)', border: '1px solid rgba(71,198,235,0.2)', color: 'var(--blue)', padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>
-                    {isImage ? '🖼' : isPdf ? '📄' : '📦'} {fileName || 'Download file'}
+                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 8 }}>SUBMITTED WORK</div>
+                  <a href={fileUrl} target="_blank" rel="noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(71,198,235,0.1)', border: '1px solid rgba(71,198,235,0.2)', color: 'var(--blue)', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>
+                    🔗 Open in Google Drive →
                   </a>
                 </div>
               )}

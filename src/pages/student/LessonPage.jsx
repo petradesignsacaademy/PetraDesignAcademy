@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -24,11 +24,10 @@ export default function LessonPage() {
 
   const [pdfOpen,            setPdfOpen]            = useState(false)
   const [answerText,         setAnswerText]         = useState('')
-  const [file,               setFile]               = useState(null)
+  const [driveLink,          setDriveLink]          = useState('')
   const [submitting,         setSubmitting]         = useState(false)
   const [submitted,          setSubmitted]          = useState(false)
   const [existingSubmission, setExistingSubmission] = useState(null)
-  const fileRef = useRef(null)
 
   useEffect(() => {
     if (user && lesson) {
@@ -69,6 +68,7 @@ export default function LessonPage() {
         setExistingSubmission(data)
         setSubmitted(true)
         setAnswerText(data.written_answer || '')
+        setDriveLink(data.file_url || '')
       }
     } catch (err) {
       console.error('[LessonPage] loadSubmission error:', err)
@@ -97,23 +97,9 @@ export default function LessonPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!answerText && !file) return
+    const trimmedLink = driveLink.trim()
+    if (!answerText && !trimmedLink) return
     setSubmitting(true)
-
-    let fileUrl  = existingSubmission?.file_url  || null
-    let fileName = existingSubmission?.file_name || null
-
-    if (file) {
-      const ext  = file.name.split('.').pop()
-      const path = `submissions/${user.id}/${lesson.key}.${ext}`
-      const { error: uploadErr } = await supabase.storage
-        .from('assignments').upload(path, file, { upsert: true })
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage.from('assignments').getPublicUrl(path)
-        fileUrl  = urlData.publicUrl
-        fileName = file.name
-      }
-    }
 
     const { error } = await supabase
       .from('submissions')
@@ -121,13 +107,13 @@ export default function LessonPage() {
         student_id:     user.id,
         lesson_id:      lesson.key,
         written_answer: answerText,
-        file_url:       fileUrl,
-        file_name:      fileName,
+        file_url:       trimmedLink || null,
+        file_name:      null,
         status:         'submitted',
         submitted_at:   new Date().toISOString(),
       }, { onConflict: 'student_id,lesson_id' })
 
-    if (!error) { setSubmitted(true); setFile(null) }
+    if (!error) setSubmitted(true)
     setSubmitting(false)
   }
 
@@ -286,18 +272,21 @@ export default function LessonPage() {
                 ) : (
                   <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
                     <div>
-                      <label style={{ display:'block', fontFamily:'Poppins, sans-serif', fontWeight:600, fontSize:13, color:'var(--text2)', marginBottom:8 }}>Upload your work</label>
-                      <div
-                        onClick={() => fileRef.current?.click()}
-                        style={{ border:`2px dashed ${file ? 'var(--purple)' : 'var(--border)'}`, borderRadius:14, padding:'28px', textAlign:'center', cursor:'pointer', transition:'border-color 0.2s', background: file ? 'rgba(153,86,159,0.04)' : 'transparent' }}
-                      >
-                        <div style={{ fontSize:28, marginBottom:8 }}>{file ? '📎' : '📁'}</div>
-                        <div style={{ fontFamily:'Poppins, sans-serif', fontSize:14, color: file ? 'var(--purple)' : 'var(--text2)', fontWeight: file ? 600 : 400 }}>
-                          {file ? file.name : 'Click to upload your file'}
-                        </div>
-                        <div style={{ fontFamily:'Poppins, sans-serif', fontSize:12, color:'var(--text3)', marginTop:4 }}>JPEG, PNG, PDF · Max 20MB</div>
-                        <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf" style={{ display:'none' }} onChange={e => setFile(e.target.files[0] || null)} />
-                      </div>
+                      <label style={{ display:'block', fontFamily:'Poppins, sans-serif', fontWeight:600, fontSize:13, color:'var(--text2)', marginBottom:8 }}>
+                        Google Drive link <span style={{ color:'var(--text3)', fontWeight:400 }}>(optional)</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={driveLink}
+                        onChange={e => setDriveLink(e.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        style={{ width:'100%', background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:12, padding:'12px 14px', fontSize:14, color:'var(--text)', fontFamily:'Poppins, sans-serif', outline:'none', boxSizing:'border-box' }}
+                        onFocus={e => e.target.style.borderColor='#99569F'}
+                        onBlur={e => e.target.style.borderColor='var(--border)'}
+                      />
+                      <p style={{ fontFamily:'Poppins, sans-serif', fontSize:12, color:'var(--text3)', marginTop:6 }}>
+                        Upload your work to Google Drive, set sharing to <strong>Anyone with the link can view</strong>, then paste the link above.
+                      </p>
                     </div>
                     <div>
                       <label style={{ display:'block', fontFamily:'Poppins, sans-serif', fontWeight:600, fontSize:13, color:'var(--text2)', marginBottom:8 }}>
@@ -314,8 +303,8 @@ export default function LessonPage() {
                     </div>
                     <button
                       type="submit"
-                      disabled={submitting || (!file && !answerText)}
-                      style={{ background: submitting || (!file && !answerText) ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'13px 28px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor: submitting || (!file && !answerText) ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:8, alignSelf:'flex-start' }}
+                      disabled={submitting || (!driveLink.trim() && !answerText)}
+                      style={{ background: submitting || (!driveLink.trim() && !answerText) ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color:'#fff', border:'none', borderRadius:999, padding:'13px 28px', fontFamily:'Poppins, sans-serif', fontWeight:700, fontSize:14, cursor: submitting || (!driveLink.trim() && !answerText) ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:8, alignSelf:'flex-start' }}
                     >
                       {submitting
                         ? <><div style={{ width:14, height:14, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }} />Submitting...</>
