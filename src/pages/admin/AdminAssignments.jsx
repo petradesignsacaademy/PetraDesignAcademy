@@ -138,11 +138,18 @@ export default function AdminAssignments() {
                   <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text3)' }}>
                     {lesson?.moduleIdx != null ? `Module ${lesson.moduleIdx + 1}` : lesson ? 'Final Project' : ''} · Submitted {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
-                  {sub.written_answer && (
-                    <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 12, color: 'var(--text2)', marginTop: 6, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8, maxWidth: 500 }}>
-                      "{sub.written_answer.substring(0, 140)}{sub.written_answer.length > 140 ? '...' : ''}"
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                    {sub.written_answer && (
+                      <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', background: 'var(--bg2)', borderRadius: 6, padding: '3px 10px' }}>
+                        ✏️ Written answer
+                      </span>
+                    )}
+                    {sub.file_url && (
+                      <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)', background: 'var(--bg2)', borderRadius: 6, padding: '3px 10px' }}>
+                        {['jpg','jpeg','png','gif','webp'].includes(sub.file_name?.split('.').pop()?.toLowerCase()) ? '🖼 Image' : sub.file_name?.endsWith('.pdf') ? '📄 PDF' : '📦 File'}{sub.file_name ? ` · ${sub.file_name}` : ''}
+                      </span>
+                    )}
+                  </div>
                   {sub.star_rating && filter === 'reviewed' && (
                     <div style={{ display: 'flex', gap: 2, marginTop: 6 }}>
                       {[1,2,3,4,5].map(s => <span key={s} style={{ fontSize: 14, color: s <= sub.star_rating ? '#F9A534' : 'var(--bg3)' }}>★</span>)}
@@ -151,11 +158,6 @@ export default function AdminAssignments() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-                {sub.file_url && (
-                  <a href={sub.file_url} target="_blank" rel="noreferrer" style={{ background: 'rgba(71,198,235,0.1)', border: '1px solid rgba(71,198,235,0.2)', color: 'var(--blue)', padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>
-                    👁 View file
-                  </a>
-                )}
                 {filter === 'submitted' ? (
                   <button onClick={() => openReview(sub)} style={{ background: 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 10, fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                     Give Feedback
@@ -172,45 +174,95 @@ export default function AdminAssignments() {
       )}
 
       {/* Feedback modal */}
-      {selected && (
-        <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', width: '100%', maxWidth: 520, padding: 32 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 26, fontWeight: 700, color: 'var(--text)' }}>Give Feedback</h3>
-              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text3)', cursor: 'pointer' }}>×</button>
-            </div>
+      {selected && (() => {
+        const lesson = getLessonByKey(selected.lesson_id)
+          || (selected.lesson_id === 'final-project' ? { title: 'Final Course Project', moduleIdx: null } : null)
+        const fileUrl  = selected.file_url
+        const fileName = selected.file_name || ''
+        const ext      = fileName.split('.').pop().toLowerCase()
+        const isImage  = ['jpg','jpeg','png','gif','webp','svg'].includes(ext)
+        const isPdf    = ext === 'pdf'
 
-            <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
-              <div style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text)', marginBottom: 2 }}>
-                {selected.profiles?.full_name} — {getLessonByKey(selected.lesson_id)?.title || (selected.lesson_id === 'final-project' ? 'Final Course Project' : selected.lesson_id)}
+        return (
+          <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', width: '100%', maxWidth: 620, maxHeight: '90vh', overflowY: 'auto', padding: 32 }}>
+
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <div>
+                  <h3 style={{ fontFamily: 'Cormorant Upright, serif', fontSize: 26, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>
+                    {filter === 'reviewed' ? 'Edit Feedback' : 'Give Feedback'}
+                  </h3>
+                  <p style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)' }}>
+                    {selected.profiles?.full_name} — <span style={{ color: 'var(--purple)' }}>{lesson?.title || selected.lesson_id}</span>
+                  </p>
+                </div>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text3)', cursor: 'pointer', flexShrink: 0, marginLeft: 12 }}>×</button>
               </div>
+
+              {/* Written answer */}
               {selected.written_answer && (
-                <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text2)', marginTop: 6, fontStyle: 'italic' }}>
-                  "{selected.written_answer}"
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 8 }}>STUDENT'S WRITTEN ANSWER</div>
+                  <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', fontFamily: 'Poppins, sans-serif', fontSize: 14, color: 'var(--text2)', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                    {selected.written_answer}
+                  </div>
                 </div>
               )}
-            </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Star rating</label>
-              <StarPicker value={stars} onChange={setStars} />
-            </div>
+              {/* Submitted file */}
+              {fileUrl && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 8 }}>SUBMITTED FILE</div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Written feedback</label>
-              <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={5} placeholder="Write your feedback for this student..."
-                style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--text)', fontFamily: 'Poppins, sans-serif', resize: 'vertical', outline: 'none', lineHeight: 1.6 }}
-                onFocus={e => e.target.style.borderColor = '#99569F'}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'}
-              />
-            </div>
+                  {isImage && (
+                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 8, background: 'var(--bg2)' }}>
+                      <img src={fileUrl} alt={fileName} style={{ width: '100%', maxHeight: 360, objectFit: 'contain', display: 'block' }} />
+                    </div>
+                  )}
 
-            <button onClick={submitFeedback} disabled={saving || (!feedback && !stars)} style={{ width: '100%', background: saving || (!feedback && !stars) ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '13px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              {saving ? 'Sending...' : 'Send feedback to student ✓'}
-            </button>
+                  {isPdf && (
+                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 8, height: 320 }}>
+                      <iframe src={fileUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
+                    </div>
+                  )}
+
+                  <a href={fileUrl} target="_blank" rel="noreferrer" download={fileName}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(71,198,235,0.1)', border: '1px solid rgba(71,198,235,0.2)', color: 'var(--blue)', padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'Poppins, sans-serif' }}>
+                    {isImage ? '🖼' : isPdf ? '📄' : '📦'} {fileName || 'Download file'}
+                  </a>
+                </div>
+              )}
+
+              {!selected.written_answer && !fileUrl && (
+                <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '16px', marginBottom: 20, fontFamily: 'Poppins, sans-serif', fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
+                  No content submitted
+                </div>
+              )}
+
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 4 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Star rating</label>
+                  <StarPicker value={stars} onChange={setStars} />
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>Written feedback</label>
+                  <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={5} placeholder="Write your feedback for this student..."
+                    style={{ width: '100%', background: 'var(--bg2)', border: '1.5px solid var(--border)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--text)', fontFamily: 'Poppins, sans-serif', resize: 'vertical', outline: 'none', lineHeight: 1.6, boxSizing: 'border-box' }}
+                    onFocus={e => e.target.style.borderColor = '#99569F'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+
+                <button onClick={submitFeedback} disabled={saving || (!feedback && !stars)} style={{ width: '100%', background: saving || (!feedback && !stars) ? 'var(--bg3)' : 'linear-gradient(135deg, #99569F, #ED518E)', color: '#fff', border: 'none', borderRadius: 999, padding: '13px', fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {saving ? 'Sending...' : 'Send feedback to student ✓'}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </AdminLayout>
   )
 }
