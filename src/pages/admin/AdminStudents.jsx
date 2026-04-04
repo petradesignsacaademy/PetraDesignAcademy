@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { ALL_LESSONS } from '../../data/courseData'
+
+const TOTAL_LESSONS = ALL_LESSONS.length
 
 const REMOVE_URL = 'https://arizznwyilssuihycbjw.supabase.co/functions/v1/remove-student'
 
@@ -36,7 +39,27 @@ export default function AdminStudents() {
         .select('*')
         .eq('role', 'student')
         .order('created_at', { ascending: false })
-      setStudents(data || [])
+
+      const students = data || []
+
+      // Fetch completed lesson counts for all students in one query
+      const ids = students.map(s => s.id)
+      const { data: progData } = ids.length
+        ? await supabase
+            .from('course_progress')
+            .select('student_id')
+            .in('student_id', ids)
+            .eq('is_completed', true)
+            .not('lesson_key', 'eq', 'final-project')
+        : { data: [] }
+
+      // Count per student
+      const countMap = {}
+      for (const row of (progData || [])) {
+        countMap[row.student_id] = (countMap[row.student_id] || 0) + 1
+      }
+
+      setStudents(students.map(s => ({ ...s, _progress: countMap[s.id] || 0 })))
     } catch (err) {
       console.error('[AdminStudents] loadStudents error:', err)
     } finally {
@@ -213,8 +236,8 @@ export default function AdminStudents() {
       {/* Table */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr', background: 'var(--bg2)', padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
-          {['Student', 'Email', 'Status', 'Actions'].map(h => (
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1.4fr 1.6fr', background: 'var(--bg2)', padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
+          {['Student', 'Email', 'Status', 'Progress', 'Actions'].map(h => (
             <div key={h} style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text3)' }}>{h}</div>
           ))}
         </div>
@@ -229,7 +252,7 @@ export default function AdminStudents() {
           filtered.map((s, i) => {
             const st = STATUS_STYLES[s.status] || STATUS_STYLES.pending
             return (
-              <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr', padding: '14px 20px', borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+              <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1.4fr 1.6fr', padding: '14px 20px', borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
                 {/* Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #99569F, #ED518E)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: 'Poppins, sans-serif', flexShrink: 0 }}>
@@ -243,6 +266,24 @@ export default function AdminStudents() {
                 <span style={{ display: 'inline-flex', alignItems: 'center', background: st.bg, color: st.color, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, fontFamily: 'Poppins, sans-serif', width: 'fit-content' }}>
                   {st.label}
                 </span>
+                {/* Progress */}
+                <div>
+                  {s.status === 'approved' ? (() => {
+                    const pct = Math.round((s._progress / TOTAL_LESSONS) * 100)
+                    return (
+                      <div>
+                        <div style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text2)', fontWeight: 600, marginBottom: 4 }}>
+                          {s._progress}/{TOTAL_LESSONS} {s.certificate_issued ? '🎓' : ''}
+                        </div>
+                        <div style={{ background: 'var(--bg3)', borderRadius: 999, height: 5, width: 80, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg,#22C55E,#16A34A)' : 'linear-gradient(90deg,#99569F,#ED518E)', borderRadius: 999 }} />
+                        </div>
+                      </div>
+                    )
+                  })() : (
+                    <span style={{ fontFamily: 'Poppins, sans-serif', fontSize: 11, color: 'var(--text3)' }}>—</span>
+                  )}
+                </div>
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {s.status === 'pending' && (

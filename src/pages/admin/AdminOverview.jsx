@@ -19,30 +19,28 @@ export default function AdminOverview() {
   const { profile } = useAuth()
   const navigate = useNavigate()
 
-  const [stats, setStats]       = useState({ students: 0, pending: 0, submissions: 0, revenue: 0 })
-  const [pending, setPending]   = useState([])
-  const [queue, setQueue]       = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [stats, setStats]     = useState({ students: 0, pending: 0, submissions: 0, certified: 0 })
+  const [pending, setPending] = useState([])
+  const [queue, setQueue]     = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
     setLoading(true)
     try {
-      const [studentsRes, pendingRes, submissionsRes, paymentsRes] = await Promise.all([
+      const [studentsRes, pendingRes, submissionsRes, certRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'student').eq('status', 'approved'),
         supabase.from('profiles').select('*').eq('role', 'student').eq('status', 'pending').order('created_at', { ascending: false }),
         supabase.from('submissions').select('*, profiles(full_name, email)').eq('status', 'submitted').order('submitted_at', { ascending: false }).limit(5),
-        supabase.from('payments').select('amount'),
+        supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'student').eq('certificate_issued', true),
       ])
-
-      const revenue = (paymentsRes.data || []).reduce((sum, p) => sum + (p.amount || 0), 0)
 
       setStats({
         students:    studentsRes.count || 0,
         pending:     pendingRes.data?.length || 0,
         submissions: submissionsRes.data?.length || 0,
-        revenue,
+        certified:   certRes.count || 0,
       })
       setPending(pendingRes.data || [])
       setQueue(submissionsRes.data || [])
@@ -90,7 +88,7 @@ export default function AdminOverview() {
         <StatCard icon="👩‍🎨" value={loading ? '—' : stats.students}    label="Approved students"     color="var(--purple)" bg="rgba(153,86,159,0.08)" />
         <StatCard icon="⏳"  value={loading ? '—' : stats.pending}     label="Awaiting approval"     color="var(--amber)"  bg="rgba(249,165,52,0.08)" />
         <StatCard icon="📬"  value={loading ? '—' : stats.submissions} label="Assignments to review"  color="var(--pink)"   bg="rgba(237,81,142,0.08)" />
-        <StatCard icon="💰"  value={loading ? '—' : '₦' + Number(stats.revenue).toLocaleString('en-NG')} label="Total revenue" color="var(--blue)" bg="rgba(71,198,235,0.08)" />
+        <StatCard icon="🎓"  value={loading ? '—' : stats.certified} label="Certificates issued" color="var(--blue)" bg="rgba(71,198,235,0.08)" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>

@@ -13,12 +13,11 @@ const studentLinks = [
 ]
 
 const adminLinks = [
-  { to: '/admin',               label: 'Overview',       icon: '📊' },
-  { to: '/admin/students',      label: 'Students',       icon: '👩‍🎨' },
-  { to: '/admin/courses',       label: 'Course Content', icon: '📚' },
-  { to: '/admin/assignments',   label: 'Assignments',    icon: '✏️' },
-  { to: '/admin/announcements', label: 'Announcements',  icon: '📣' },
-  { to: '/admin/revenue',       label: 'Revenue',        icon: '💰' },
+  { to: '/admin',               label: 'Overview',      icon: '📊' },
+  { to: '/admin/students',      label: 'Students',      icon: '👩‍🎨' },
+  { to: '/admin/assignments',   label: 'Assignments',   icon: '✏️' },
+  { to: '/admin/announcements', label: 'Announcements', icon: '📣' },
+  { to: '/admin/portfolio',     label: 'Portfolio',     icon: '🖼️' },
 ]
 
 function NotificationIcon({ type }) {
@@ -97,8 +96,7 @@ export default function Navbar({ variant = 'student' }) {
     setMenuOpen(false)
   }
 
-  const firstName = profile?.full_name?.split(' ')[0] || 'Account'
-  const links     = variant === 'admin' ? adminLinks : studentLinks
+  const links = variant === 'admin' ? adminLinks : studentLinks
 
   return (
     <>
@@ -207,16 +205,14 @@ export default function Navbar({ variant = 'student' }) {
             <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
           </button>
 
-          <div
-            onClick={handleSignOut}
-            title="Sign out"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 10px', borderRadius: 999 }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            <Avatar name={profile?.full_name || 'User'} src={profile?.avatar_url} size={32} />
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)', fontFamily: 'var(--font-body)' }}>{firstName}</span>
-          </div>
+          {variant === 'student' && (
+            <Link to="/account" style={{ padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: 'var(--text2)', textDecoration: 'none', fontFamily: 'var(--font-body)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+              My Account
+            </Link>
+          )}
+          <button onClick={handleSignOut} style={{ padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: '#EF4444', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+            Log out
+          </button>
         </div>
 
         {/* Hamburger */}
